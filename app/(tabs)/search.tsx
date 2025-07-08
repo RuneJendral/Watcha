@@ -21,9 +21,9 @@ const search = () => {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(async() => {
       if (searchQuery.trim()) {
-        loadMovies();
+        await loadMovies();
       } else {
         reset();
       }
