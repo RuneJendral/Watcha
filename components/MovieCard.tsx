@@ -3,6 +3,13 @@ import { Link } from 'expo-router'
 import React from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
 
+const CreateDate = (date: string) => {
+    const dates:string[] = ["", "Jan.", "Feb. ", "Mar. ", "Apr. ", "May ", "Jun. ", "Jul. ", "Aug. ", "Sep. ", "Oct. ", "Nov. ", "Dec. "];
+    const dateName:string = dates[parseInt(date.split('-')[1])] + date?.split('-')[0];
+
+  return (dateName)
+}
+
 const MovieCard = ({id, poster_path, title, vote_average, release_date}: Movie) => {
   return (
     <Link href={`/movies/${id}`} asChild>
@@ -18,11 +25,11 @@ const MovieCard = ({id, poster_path, title, vote_average, release_date}: Movie) 
 
             <View className="flex-row items-center justify-start gap-x-1">
                 <Image source={icons.star} className="size-4"/>
-                <Text className="text=xs text-white font-bold uppercase">{Math.round(vote_average / 2)}</Text>
+                <Text className="text=xs text-white font-bold uppercase">{Math.round(vote_average)}/10</Text>
             </View>
 
             <View className="flex-row items-center justify-between">
-                <Text className="text-xs text-light-300 font-medium mt-1">{release_date?.split('-')[0]}</Text>
+                <Text className="text-xs text-light-300 font-medium mt-1">{CreateDate(release_date)}</Text>
                 {/*<Text className="text-xs font-medium text-light-300 uppercase">Movie</Text>*/}
             </View>
         </TouchableOpacity>
