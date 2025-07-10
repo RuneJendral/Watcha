@@ -1,7 +1,7 @@
 import { Client, Databases, ID, Query } from "react-native-appwrite";
 
 const DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!;
-const COLLECTION_ID = process.env.EXPO_PUBLIC_APPWRITE_COLLECTION_ID!;
+const COLLECTION_MOVIE_ID = process.env.EXPO_PUBLIC_APPWRITE_METRICS_COLLECTION_ID!;
 
 const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!).setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!);
 
@@ -12,7 +12,7 @@ export const updateSearchCount = async (query: string, movie: Movie) =>{
     if (!query || !movie?.id || !movie?.title) return;
 
     try {
-        const result = await database.listDocuments(DATABASE_ID, COLLECTION_ID, [
+        const result = await database.listDocuments(DATABASE_ID, COLLECTION_MOVIE_ID, [
         Query.equal('searchTerm', query)
         ])
 
@@ -21,14 +21,14 @@ export const updateSearchCount = async (query: string, movie: Movie) =>{
 
             await database.updateDocument(
                 DATABASE_ID,
-                COLLECTION_ID,
+                COLLECTION_MOVIE_ID,
                 existingMovie.$id,
                 {
                     count: existingMovie.count + 1
                 }
             )
         } else {
-            await database.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
+            await database.createDocument(DATABASE_ID, COLLECTION_MOVIE_ID, ID.unique(), {
                 searchTerm: query,
                 movie_id: movie.id,
                 count: 1,
@@ -46,7 +46,7 @@ export const updateSearchCount = async (query: string, movie: Movie) =>{
 
 export const getTrendingMovies = async (): Promise<TrendingMovie[] | undefined> => {
     try{
-        const result = await database.listDocuments(DATABASE_ID, COLLECTION_ID, [
+        const result = await database.listDocuments(DATABASE_ID, COLLECTION_MOVIE_ID, [
             Query.limit(5),
             Query.orderDesc('count'),
         ])
@@ -56,4 +56,12 @@ export const getTrendingMovies = async (): Promise<TrendingMovie[] | undefined> 
         console.log(error);
         return undefined;
     }
+}
+
+export const appwriteConfig = {
+    endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
+    projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
+    platform: "com.rj.watcha",
+    databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
+    userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID
 }
