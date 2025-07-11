@@ -16,20 +16,8 @@ const search = () => {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const{data: movies, loading, error, refetch: loadMovies, reset} = useFetch(() => fetchMovies({
-    query: searchQuery}
-  ), false)
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    const timeoutId = setTimeout(async() => {
-      if (searchQuery.trim()) {
-        await loadMovies();
-      } else {
-        reset();
-      }
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+    query: searchQuery}, 
+  ), false, [])
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -62,7 +50,14 @@ const search = () => {
             </View>
 
             <View className="my-5">
-              <SearchBar placeholder="Search movies ..." value={searchQuery} onChangeText={(text: string) => setSearchQuery(text)}/>
+              <SearchBar placeholder="Search movies ..." value={searchQuery} onChangeText={(text: string) => setSearchQuery(text)} onSubmit={() => {
+                  if (searchQuery.trim()) {
+                    loadMovies();
+                  } else {
+                    reset();
+                  }
+                }}
+              />
             </View>
 
             {loading && (<ActivityIndicator size="large" color="#0000ff" className="my-3"></ActivityIndicator>)}

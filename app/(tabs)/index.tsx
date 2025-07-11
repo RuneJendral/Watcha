@@ -1,23 +1,20 @@
 import MovieCard from "@/components/MovieCard";
-import SearchBar from "@/components/SearchBar";
 import TrendingCard from "@/components/TrendingCard";
 import { icons } from "@/constants/icons";
 import { images } from "@/constants/images";
 import { fetchMovies } from "@/services/api";
 import { getTrendingMovies } from "@/services/appwrite";
 import useFetch from "@/services/useFetch";
-import { router } from "expo-router";
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, View } from "react-native";
 
 export default function Index() {
 
   const { data: trendingMovies, loading: trendingLoading, error: trendingError
 
-  } = useFetch(getTrendingMovies);
+  } = useFetch(getTrendingMovies, true, []);
 
   const{data: movies, loading: moviesLoading, error: moviesError} = useFetch(() => fetchMovies({
-    query: ''}
-  ))
+    query: ''}), true, [])
 
   return (
     <View className="flex-1 bg-primary">
@@ -37,14 +34,9 @@ export default function Index() {
         ) : (
           <View className="flex-1 mt-5">
 
-            <SearchBar
-              onPress={() => router.push("/search")}
-              placeholder="Search for a movie"
-            />
-
             {trendingMovies && (
               <View className="mt-10">
-                <Text className="text-lg text-white font-bold mb-3">Trending Movies</Text>
+                <Text className="text-lg text-white font-bold mb-3">Search Trends</Text>
               </View>
             )}
 
@@ -63,7 +55,7 @@ export default function Index() {
 
               />
 
-              <Text className="text-lg text-white font-bold mt-5 mb-3">Latest Movies</Text>
+              <Text className="text-lg text-white font-bold mt-5 mb-3">Popular Movies</Text>
 
               <FlatList 
                 data={Array.isArray(movies) ? movies : []}
