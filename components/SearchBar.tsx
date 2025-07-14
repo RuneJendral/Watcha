@@ -1,13 +1,7 @@
 import { icons } from "@/constants/icons";
+import { Props } from "@/type";
 import React from 'react';
 import { Image, TextInput, View } from 'react-native';
-
-interface Props{
-    placeholder: string;
-    value?: string;
-    onChangeText?: (text: string) => void;
-    onSubmit?: () => void;
-}
 
 const SearchBar = ({placeholder, value, onChangeText, onSubmit}: Props) => {
   return (

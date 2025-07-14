@@ -1,14 +1,10 @@
 import { icons } from '@/constants/icons';
 import { fetchMovieDetails } from '@/services/api';
 import useFetch from '@/services/useFetch';
+import { MovieInfoProps } from '@/type';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
-
-interface MovieInfoProps {
-  label: string;
-  value?: string | number | null;
-}
 
 const MovieInfo = ({label, value }: MovieInfoProps) => (
   <View className="flex-col items-start justify-center mt-5">

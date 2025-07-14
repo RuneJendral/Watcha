@@ -1,18 +1,75 @@
-import { Client, Databases, ID, Query } from "react-native-appwrite";
+import { CreateUserParams, SignInParams } from '@/type';
+import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
-const DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!;
-const COLLECTION_MOVIE_ID = process.env.EXPO_PUBLIC_APPWRITE_METRICS_COLLECTION_ID!;
+export const appwriteConfig = {
+    endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!,
+    projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!,
+    platform:  process.env.EXPO_PUBLIC_APPWRITE_PLATFORM!,
+    databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
+    userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID!,
+    movieCollectionId: process.env.EXPO_PUBLIC_APPWRITE_METRICS_COLLECTION_ID!
+}
 
-const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!).setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!);
+export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!).setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!).setPlatform(appwriteConfig.platform);
+export const account = new Account(client);
+export const database = new Databases(client);
+const avatars = new Avatars(client);
 
-const database = new Databases(client);
+export const createUser = async ({email, password, name}: CreateUserParams) => {
+    try{
+        const newAccount = await account.create(ID.unique(), email, password, name);
+        if(!newAccount) throw Error;
+
+        await signIn({email, password});
+
+        const avatarUrl = avatars.getInitialsURL(name);
+
+        return await database.createDocument(
+            appwriteConfig.databaseId, 
+            appwriteConfig.userCollectionId, 
+            ID.unique(),
+            {email, name, accountId: newAccount.$id, avatar: avatarUrl}
+        )
+        
+    } catch(e) {
+        throw new Error(e as string);
+    }
+}
+
+export const signIn = async ({email, password}: SignInParams) => {
+    try {
+        const session = await account.createEmailPasswordSession(email, password);
+    } catch (e) {
+        throw new Error(e as string);
+    }
+}
+
+export const getCurrentUser = async () => {
+    try {
+        const currentAccount = await account.get();
+        if(!currentAccount) throw Error;
+
+        const currentUser = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            [Query.equal('accountId', currentAccount.$id)]
+        )
+
+        if(!currentUser) throw Error;
+
+        return currentUser.documents[0];
+    } catch (e) {
+        console.log(e);
+        throw new Error(e as string);
+    }
+}
 
 export const updateSearchCount = async (query: string, movie: Movie) =>{
 
     if (!query || !movie?.id || !movie?.title) return;
 
     try {
-        const result = await database.listDocuments(DATABASE_ID, COLLECTION_MOVIE_ID, [
+        const result = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.movieCollectionId, [
         Query.equal('searchTerm', query)
         ])
 
@@ -20,15 +77,15 @@ export const updateSearchCount = async (query: string, movie: Movie) =>{
             const existingMovie = result.documents[0];
 
             await database.updateDocument(
-                DATABASE_ID,
-                COLLECTION_MOVIE_ID,
+                appwriteConfig.databaseId,
+                appwriteConfig.movieCollectionId,
                 existingMovie.$id,
                 {
                     count: existingMovie.count + 1
                 }
             )
         } else {
-            await database.createDocument(DATABASE_ID, COLLECTION_MOVIE_ID, ID.unique(), {
+            await database.createDocument(appwriteConfig.databaseId, appwriteConfig.movieCollectionId, ID.unique(), {
                 searchTerm: query,
                 movie_id: movie.id,
                 count: 1,
@@ -46,7 +103,7 @@ export const updateSearchCount = async (query: string, movie: Movie) =>{
 
 export const getTrendingMovies = async (): Promise<TrendingMovie[] | undefined> => {
     try{
-        const result = await database.listDocuments(DATABASE_ID, COLLECTION_MOVIE_ID, [
+        const result = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.movieCollectionId, [
             Query.limit(5),
             Query.orderDesc('count'),
         ])
@@ -56,12 +113,4 @@ export const getTrendingMovies = async (): Promise<TrendingMovie[] | undefined> 
         console.log(error);
         return undefined;
     }
-}
-
-export const appwriteConfig = {
-    endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
-    projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
-    platform: "com.rj.watcha",
-    databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
-    userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID
 }
