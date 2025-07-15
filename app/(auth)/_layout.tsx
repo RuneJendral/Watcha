@@ -1,9 +1,15 @@
 import { icons } from "@/constants/icons";
 import { images } from "@/constants/images";
-import { Slot } from "expo-router";
+// eslint-disable-next-line import/namespace, import/no-named-as-default, import/no-named-as-default-member
+import useAuthStore from "@/store/auth.store";
+import { Redirect, Slot } from "expo-router";
 import { Dimensions, Image, ImageBackground, KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 
-export default function _layout(){
+export default function AuthLayout(){
+    const { isAuthenticated } = useAuthStore();
+
+    if(isAuthenticated) return <Redirect href="/"/>
+
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <ScrollView className="bg-primary h-full" keyboardShouldPersistTaps="handled">

@@ -1,4 +1,6 @@
 import { icons } from "@/constants/icons";
+// eslint-disable-next-line import/namespace, import/no-named-as-default, import/no-named-as-default-member
+import useAuthStore from "@/store/auth.store";
 import { Redirect, Tabs } from 'expo-router';
 import { Image, View } from "react-native";
 
@@ -20,15 +22,12 @@ const TabIcon = ({focused, icon, iconHighlight}: any) => {
   
 }
 
-const _layout = () => {
+const TabLayout = () => {
+  const {isAuthenticated}  = useAuthStore();
 
-  const isAuthenticated = false;
-
-  if(!isAuthenticated) return <Redirect href="/sign-in"/>
+  if(!isAuthenticated) return <Redirect href={"/sign-in"}/>
 
   return (
-
-   
       <Tabs screenOptions={{ tabBarShowLabel: false, tabBarItemStyle:{width: "100%", height: "100%", justifyContent: "center", alignItems: "center"}, tabBarStyle:{backgroundColor: "#0f0D23", height: 100, position: "absolute", borderWidth: 1, borderColor: "#0f0d23", overflow: "hidden"}}}>
         <Tabs.Screen name='index' options={{title: 'Home', headerShown: false, tabBarIcon: ({ focused }) => (<TabIcon focused={focused} icon={icons.home} iconHighlight={icons.homeHighlight}/>) }}/>
         <Tabs.Screen name='search' options={{title: 'Search', headerShown: false, tabBarIcon: ({ focused }) => (<TabIcon focused={focused} icon={icons.search} iconHighlight={icons.searchHighlight}/>) }}/>
@@ -36,9 +35,7 @@ const _layout = () => {
         <Tabs.Screen name='profile' options={{title: 'Profile', headerShown: false, tabBarIcon: ({ focused }) => (<TabIcon focused={focused} icon={icons.profile} iconHighlight={icons.profileHighlight}/>)}}/>
         <Tabs.Screen name='[id]' options={{href: null, headerShown: false,}}/>
       </Tabs>
-
-      
   )
 }
 
-export default _layout
+export default TabLayout

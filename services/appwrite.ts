@@ -14,6 +14,7 @@ export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_
 export const account = new Account(client);
 export const database = new Databases(client);
 const avatars = new Avatars(client);
+let session;
 
 export const createUser = async ({email, password, name}: CreateUserParams) => {
     try{
@@ -38,7 +39,15 @@ export const createUser = async ({email, password, name}: CreateUserParams) => {
 
 export const signIn = async ({email, password}: SignInParams) => {
     try {
-        const session = await account.createEmailPasswordSession(email, password);
+         session = await account.createEmailPasswordSession(email, password);
+    } catch (e) {
+        throw new Error(e as string);
+    }
+}
+
+export const logOut = async () => {
+    try {
+        account.deleteSessions();
     } catch (e) {
         throw new Error(e as string);
     }

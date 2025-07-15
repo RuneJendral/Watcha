@@ -8,7 +8,6 @@ import useFetch from "@/services/useFetch";
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, View } from "react-native";
 
 export default function Index() {
-
   const { data: trendingMovies, loading: trendingLoading, error: trendingError
 
   } = useFetch(getTrendingMovies, true, []);
