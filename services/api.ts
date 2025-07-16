@@ -1,3 +1,5 @@
+import { MovieDetails } from "@/type";
+
 export const TMDB_CONFIG = {
     BASE_URL: 'https://api.themoviedb.org/3',
     API_KEY: process.env.EXPO_PUBLIC_MOVIE_API_KEY, 

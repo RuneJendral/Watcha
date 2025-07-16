@@ -5,14 +5,14 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 
 const CustomButton = ({onPress, title="Click Me", style, textStyle, leftIcon, isLoading = false}:CustomButtonProps) => {
     return (
-        <TouchableOpacity className={cn('custom-btn', style)} onPress={onPress}>
+        <TouchableOpacity className={cn('bg-accent rounded-lg py-4 px-4', style)} onPress={onPress}>
             {leftIcon}
 
-            <View className="flex-center flex-row">
+            <View className="flex-row items-center justify-center">
                 {isLoading ? (
                     <ActivityIndicator size="small" color="white"/>
                 ):(
-                    <Text className={cn('text-white paragraph-semibold', textStyle)}>
+                    <Text className={cn('text-white font-bold', textStyle)}>
                         {title}
                     </Text>
                 )}

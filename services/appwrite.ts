@@ -1,4 +1,4 @@
-import { CreateUserParams, SignInParams } from '@/type';
+import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, SignInParams, TrendingMovie } from '@/type';
 import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -14,7 +14,6 @@ export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_
 export const account = new Account(client);
 export const database = new Databases(client);
 const avatars = new Avatars(client);
-let session;
 
 export const createUser = async ({email, password, name}: CreateUserParams) => {
     try{
@@ -39,7 +38,7 @@ export const createUser = async ({email, password, name}: CreateUserParams) => {
 
 export const signIn = async ({email, password}: SignInParams) => {
     try {
-         session = await account.createEmailPasswordSession(email, password);
+         const session = await account.createEmailPasswordSession(email, password);
     } catch (e) {
         throw new Error(e as string);
     }
@@ -48,6 +47,30 @@ export const signIn = async ({email, password}: SignInParams) => {
 export const logOut = async () => {
     try {
         account.deleteSessions();
+    } catch (e) {
+        throw new Error(e as string);
+    }
+}
+
+export const changeName = async ({name}: ChangeNameParams) => {
+    try {
+        account.updateName(name);
+    } catch (e) {
+        throw new Error(e as string);
+    }
+}
+
+export const changeMail = async ({email, password}: ChangeMailParams) => {
+    try {
+        account.updateEmail(email, password);
+    } catch (e) {
+        throw new Error(e as string);
+    }
+}
+
+export const changePassword = async ({newPassword, oldPassword}: ChangePasswordParams) => {
+    try {
+        account.updatePassword(newPassword, oldPassword);
     } catch (e) {
         throw new Error(e as string);
     }

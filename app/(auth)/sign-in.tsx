@@ -56,7 +56,7 @@ const SignIn = () => {
             />
 
             <View className="flex justify-center mt-5 flex-row gap-2">
-                <Text className="base-regular text-white">Do not have an account?</Text>
+                <Text className="base-regular text-light-300">Do not have an account?</Text>
                 <Link href="/sign-up" className="base-bold text-accent">Sign Up</Link>
             </View>
         </View>
