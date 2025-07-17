@@ -1,14 +1,22 @@
 import { icons } from '@/constants/icons'
+import { images } from '@/constants/images'
 import React from 'react'
-import { Image, Text, View } from 'react-native'
+import { Image, ScrollView, Text, View } from 'react-native'
 
 const group = () => {
   return (
-    <View className="bg-primary flex-1 px-10">
-      <View className="flex justify-center items-center flex-1 flex-col gap-5">
-        <Image source={icons.group} className="size-10" tintColor="#fff"/>
-        <Text className="text-gray-500 text-500">Group</Text>
-      </View>
+    <View className="flex-1 bg-primary">
+      <Image source={images.bg} className="absolute w-full y-0"/>
+      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
+        <Image source={icons.logo} className="w-12 h-10 mt-20 mb-5 mx-auto"/>
+
+        
+        <View className="mt-10">
+          <Text className="text-lg text-white font-bold mb-3">Watchlists</Text>
+        </View>
+        
+
+      </ScrollView>
     </View>
   )
 }
