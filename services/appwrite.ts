@@ -54,7 +54,27 @@ export const logOut = async () => {
 
 export const changeName = async ({name}: ChangeNameParams) => {
     try {
-        account.updateName(name);
+        const user = await account.get();
+
+        await await account.updateName(name);
+
+        const userDocs = await database.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.userCollectionId,
+        [Query.equal("accountId", user.$id)]
+        );
+
+        if (userDocs.total === 0) {
+            throw new Error("User document not found in user collection.");
+        }
+
+        await database.updateDocument(
+            appwriteConfig.databaseId, 
+            appwriteConfig.userCollectionId, 
+            userDocs.documents[0].$id,
+            {name}
+        )
+
     } catch (e) {
         throw new Error(e as string);
     }
@@ -62,7 +82,27 @@ export const changeName = async ({name}: ChangeNameParams) => {
 
 export const changeMail = async ({email, password}: ChangeMailParams) => {
     try {
-        account.updateEmail(email, password);
+        const user = await account.get();
+
+        await await account.updateEmail(email, password);
+
+        const userDocs = await database.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.userCollectionId,
+        [Query.equal("accountId", user.$id)]
+        );
+
+        if (userDocs.total === 0) {
+            throw new Error("User document not found in user collection.");
+        }
+
+        await database.updateDocument(
+            appwriteConfig.databaseId, 
+            appwriteConfig.userCollectionId, 
+            userDocs.documents[0].$id,
+            {email}
+        )
+
     } catch (e) {
         throw new Error(e as string);
     }
@@ -70,7 +110,7 @@ export const changeMail = async ({email, password}: ChangeMailParams) => {
 
 export const changePassword = async ({newPassword, oldPassword}: ChangePasswordParams) => {
     try {
-        account.updatePassword(newPassword, oldPassword);
+        await account.updatePassword(newPassword, oldPassword);
     } catch (e) {
         throw new Error(e as string);
     }

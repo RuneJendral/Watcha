@@ -1,6 +1,5 @@
 import { icons } from "@/constants/icons";
 import { images } from "@/constants/images";
- 
 import useAuthStore from "@/store/auth.store";
 import { Redirect, Slot } from "expo-router";
 import { Dimensions, Image, ImageBackground, KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";

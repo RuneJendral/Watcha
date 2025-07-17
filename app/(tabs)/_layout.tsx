@@ -10,7 +10,7 @@ const TabIcon = ({focused, icon, iconHighlight}: TabBarIconProps) => {
     {
         return(
           <View className="size-full justify-center items-center mt-4" >
-            <Image source={iconHighlight} tintColor="#A8B5DB" className="size-7"/>
+            <Image source={iconHighlight} tintColor="#AB8BFF" className="size-7"/>
           </View>
         )
     }
@@ -27,7 +27,7 @@ const TabProfileIcon = ({focused, icon, iconHighlight}: TabBarIconProps) => {
     {
         return(
           <View className="size-full justify-center items-center mt-4" >
-            <Image source={iconHighlight} tintColor="#A8B5DB" className="size-7 rounded-full"/>
+            <Image source={iconHighlight} tintColor="#AB8BFF" className="size-7 rounded-full"/>
           </View>
         )
     }
@@ -51,7 +51,7 @@ const TabLayout = () => {
         <Tabs.Screen name='index' options={{title: 'Home', headerShown: false, tabBarIcon: ({ focused }) => (<TabIcon focused={focused} icon={icons.home} iconHighlight={icons.homeHighlight}/>) }}/>
         <Tabs.Screen name='search' options={{title: 'Search', headerShown: false, tabBarIcon: ({ focused }) => (<TabIcon focused={focused} icon={icons.search} iconHighlight={icons.searchHighlight}/>) }}/>
         <Tabs.Screen name='group' options={{title: 'Group', headerShown: false, tabBarIcon: ({ focused }) => (<TabIcon focused={focused} icon={icons.group} iconHighlight={icons.groupHighlight}/>)}}/>
-        <Tabs.Screen name='profile' options={{title: 'Profile', headerShown: false, tabBarIcon: ({ focused }) => (<TabProfileIcon focused={focused} icon={{ uri: avatarUrl }} iconHighlight={icons.profileHighlight}/>)}}/>
+        <Tabs.Screen name='profile' options={{title: 'Profile', headerShown: false, tabBarIcon: ({ focused }) => (<TabProfileIcon focused={focused} icon={{ uri: avatarUrl }} iconHighlight={{ uri: avatarUrl }}/>)}}/>
         <Tabs.Screen name='movies/[id]' options={{href: null, headerShown: false,}}/>
       </Tabs>
   )

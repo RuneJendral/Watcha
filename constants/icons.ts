@@ -4,6 +4,7 @@ import group from "@/assets/icons/group.png";
 import groupHighlight from "@/assets/icons/groupHighlight.png";
 import home from "@/assets/icons/home.png";
 import homeHighlight from "@/assets/icons/homeHighlight.png";
+import leftArrow from "@/assets/icons/left-arrow.png";
 import lock from "@/assets/icons/lock.png";
 import logo from "@/assets/icons/logo.png";
 import logout from "@/assets/icons/logout.png";
@@ -35,5 +36,6 @@ export const icons = {
   mail,
   lock,
   rightArrow,
+  leftArrow,
   user,
 };

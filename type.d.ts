@@ -1,3 +1,4 @@
+import { RelativePathString } from "expo-router";
 import { ImageSourcePropType } from "react-native";
 import { Models } from "react-native-appwrite";
 
@@ -158,4 +159,5 @@ interface SettingsItemProps {
     onPress?: () => void;
     textStyle?: string;
     showArrow?: boolean;
+    path?: RelativePathString;
 }

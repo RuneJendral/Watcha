@@ -1,4 +1,4 @@
-// eslint-disable-next-line import/namespace, import/no-named-as-default, import/no-named-as-default-member
+ 
 import useAuthStore from "@/store/auth.store";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
@@ -7,7 +7,7 @@ import "./global.css";
 
 export default function RootLayout() {
 
-  const {isLoading, fetchAuthtnticatedUser} = useAuthStore();
+  const {isLoading, fetchAuthenticatedUser: fetchAuthtnticatedUser} = useAuthStore();
 
   useEffect(() =>{
     fetchAuthtnticatedUser();
@@ -21,7 +21,8 @@ export default function RootLayout() {
 
     <Stack>
       <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
-       <Stack.Screen name="(auth)" options={{headerShown: false}}/>
+      <Stack.Screen name="(auth)" options={{headerShown: false}}/>
+      <Stack.Screen name="settings" options={{headerShown: false}}/>
     </Stack>
   </>
   );

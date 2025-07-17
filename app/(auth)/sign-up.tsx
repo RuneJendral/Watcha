@@ -8,20 +8,24 @@ import { Alert, Text, View } from "react-native"
 
 const SignUp = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [form, setForm] = useState({name: '', email: '', password: ''});
+    const [form, setForm] = useState({name: '', email: '', password: '', repeatPassword: ''});
 
     const submit = async () => {
-        const {name, email, password} = form;
+        const {name, email, password, repeatPassword} = form;
 
-        if(!name || !email || !password){
+        if(!name || !email || !password || !repeatPassword){
             return Alert.alert('Error', 'Please enter valid username or password');
+        }
+
+        if(password !== repeatPassword){
+            return Alert.alert('Error', 'Please repeat the same new Password');
         }
 
         setIsSubmitting(true)
 
         try{
             await createUser({email, password, name});
-            await useAuthStore.getState().fetchAuthtnticatedUser();
+            await useAuthStore.getState().fetchAuthenticatedUser();
             router.replace('/');
         } catch(error: any){
             Alert.alert('Error', error.message);
@@ -57,6 +61,13 @@ const SignUp = () => {
                 secureTextEntry={true}
             />
 
+            <CustomInput 
+                placeholder="Repeat your Password" 
+                value={form.repeatPassword} 
+                onChangeText={(text) => setForm((prev) => ({ ...prev, repeatPassword: text}))} 
+                label="repeat Password" 
+                secureTextEntry={true}
+            />
 
             <CustomButton 
                 title="Sign Up"
