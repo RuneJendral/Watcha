@@ -1,6 +1,7 @@
 import CustomButton from "@/components/CustomButton"
 import CustomInput from "@/components/CustomInput"
 import { createUser } from "@/services/appwrite"
+import useAuthStore from "@/store/auth.store"
 import { Link, router } from "expo-router"
 import { useState } from "react"
 import { Alert, Text, View } from "react-native"
@@ -20,7 +21,7 @@ const SignUp = () => {
 
         try{
             await createUser({email, password, name});
-
+            await useAuthStore.getState().fetchAuthtnticatedUser();
             router.replace('/');
         } catch(error: any){
             Alert.alert('Error', error.message);
