@@ -8,12 +8,9 @@ import useFetch from "@/services/useFetch";
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, View } from "react-native";
 
 export default function Index() {
-  const { data: trendingMovies, loading: trendingLoading, error: trendingError
+  const {data: trendingMovies, loading: trendingLoading, error: trendingError} = useFetch(getTrendingMovies, true, []);
 
-  } = useFetch(getTrendingMovies, true, []);
-
-  const{data: movies, loading: moviesLoading, error: moviesError} = useFetch(() => fetchMovies({
-    query: ''}), true, [])
+  const{data: movies, loading: moviesLoading, error: moviesError} = useFetch(() => fetchMovies({query: ''}), true, [])
 
   return (
     <View className="flex-1 bg-primary">

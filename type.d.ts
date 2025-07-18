@@ -161,3 +161,9 @@ interface SettingsItemProps {
     showArrow?: boolean;
     path?: RelativePathString;
 }
+
+interface Watchlist {
+  id: string;
+  name: string;
+  watchlistMovies?: string[]; 
+}

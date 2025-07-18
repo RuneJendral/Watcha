@@ -1,4 +1,4 @@
-import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, SignInParams, TrendingMovie } from '@/type';
+import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, SignInParams, TrendingMovie, Watchlist } from '@/type';
 import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -7,7 +7,8 @@ export const appwriteConfig = {
     platform:  process.env.EXPO_PUBLIC_APPWRITE_PLATFORM!,
     databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
     userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID!,
-    movieCollectionId: process.env.EXPO_PUBLIC_APPWRITE_METRICS_COLLECTION_ID!
+    movieCollectionId: process.env.EXPO_PUBLIC_APPWRITE_METRICS_COLLECTION_ID!,
+    watchlistCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_COLLECTION_ID!
 }
 
 export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!).setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!).setPlatform(appwriteConfig.platform);
@@ -181,6 +182,20 @@ export const getTrendingMovies = async (): Promise<TrendingMovie[] | undefined> 
         ])
 
     return result.documents as unknown as TrendingMovie[];
+    }   catch (error){
+        console.log(error);
+        return undefined;
+    }
+}
+
+export const getWatchlists = async (): Promise<Watchlist[] | undefined> => {
+    try{
+        const currentAccount = await account.get();
+        if(!currentAccount) throw Error;
+
+        const result = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistCollectionId)
+
+    return result.documents.map(doc => ({id: doc.$id,name: doc.name,})) as Watchlist[];
     }   catch (error){
         console.log(error);
         return undefined;
