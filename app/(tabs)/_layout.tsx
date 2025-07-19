@@ -53,6 +53,7 @@ const TabLayout = () => {
         <Tabs.Screen name='group' options={{title: 'Group', headerShown: false, tabBarIcon: ({ focused }) => (<TabIcon focused={focused} icon={icons.group} iconHighlight={icons.groupHighlight}/>)}}/>
         <Tabs.Screen name='profile' options={{title: 'Profile', headerShown: false, tabBarIcon: ({ focused }) => (<TabProfileIcon focused={focused} icon={{ uri: avatarUrl }} iconHighlight={{ uri: avatarUrl }}/>)}}/>
         <Tabs.Screen name='movies/[id]' options={{href: null, headerShown: false,}}/>
+         <Tabs.Screen name='watchlists/[id]' options={{href: null, headerShown: false,}}/>
       </Tabs>
   )
 }

@@ -1,3 +1,4 @@
+import add from "@/assets/icons/add.png";
 import arrow from "@/assets/icons/arrow.png";
 import edit from "@/assets/icons/edit.png";
 import group from "@/assets/icons/group.png";
@@ -38,4 +39,5 @@ export const icons = {
   rightArrow,
   leftArrow,
   user,
+  add,
 };

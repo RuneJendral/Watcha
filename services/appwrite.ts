@@ -8,7 +8,8 @@ export const appwriteConfig = {
     databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!,
     userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID!,
     movieCollectionId: process.env.EXPO_PUBLIC_APPWRITE_METRICS_COLLECTION_ID!,
-    watchlistCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_COLLECTION_ID!
+    watchlistCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_COLLECTION_ID!,
+    watchlistMemberCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_MEMBERS_COLLECTION_ID!
 }
 
 export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!).setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!).setPlatform(appwriteConfig.platform);
@@ -188,14 +189,28 @@ export const getTrendingMovies = async (): Promise<TrendingMovie[] | undefined> 
     }
 }
 
-export const getWatchlists = async (): Promise<Watchlist[] | undefined> => {
+export const getUserWatchlists  = async (): Promise<Watchlist[] | undefined> => {
     try{
         const currentAccount = await account.get();
         if(!currentAccount) throw Error;
 
-        const result = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistCollectionId)
+        const memberLinks = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.watchlistMemberCollectionId,
+            [Query.equal('user_ids', currentAccount.$id)]
+        );
 
-    return result.documents.map(doc => ({id: doc.$id,name: doc.name,})) as Watchlist[];
+        console.log(memberLinks.documents.map(doc => doc.watchlist_id));
+
+        const watchlistIds = memberLinks.documents.map(doc => doc.watchlist_id);
+
+        const watchlists = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.watchlistCollectionId,
+            [Query.equal('$id', watchlistIds)]
+        );
+
+    return watchlists.documents.map(doc => ({id: doc.$id,name: doc.name})) as Watchlist[];
     }   catch (error){
         console.log(error);
         return undefined;

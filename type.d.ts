@@ -153,6 +153,13 @@ interface TrendingCardProps {
   index: number;
 }
 
+type WatchlistProps = {
+  id: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+};
+
 interface SettingsItemProps {
     icon: ImageSourcePropType;
     title: string; 
@@ -166,4 +173,11 @@ interface Watchlist {
   id: string;
   name: string;
   watchlistMovies?: string[]; 
+  watchlistMembers?: string[]; 
+}
+
+interface WatchlistMember {
+  id: string;
+  watchlistId?: string[];
+  user_id?: string[];
 }
