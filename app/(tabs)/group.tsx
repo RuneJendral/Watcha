@@ -57,7 +57,7 @@ const group = () => {
                 }}
                 keyExtractor={(item, index) => item.type === 'watchlist' ? item.id.toString() : `create-${index}`}
                 numColumns={2}
-                columnWrapperStyle={{justifyContent: 'flex-start', gap: 18, paddingRight: 5, marginBottom: 10}}
+                columnWrapperStyle={{justifyContent: 'center', gap: 18, paddingRight: 5, marginBottom: 10}}
                 className="mt-2 pb-32"
                 scrollEnabled={false}>
                </FlatList>

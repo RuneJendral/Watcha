@@ -6,7 +6,7 @@ import { Text, TouchableOpacity, View } from 'react-native'
 const WatchlistCard = ({id, name }: WatchlistProps) => {  
   return (
     <Link href={`/(tabs)/watchlists/${id}`} asChild>
-        <TouchableOpacity className="bg-primary rounded-xl overflow-hidden border-2 border-accent my-2 w-[48%]">
+        <TouchableOpacity className="bg-primary rounded-xl overflow-hidden border-2 border-accent my-2 w-[45%]">
 
           <View className="bg-accent  p-4 rounded-lg">
             <Text className="text-black font-bold">{name}</Text>

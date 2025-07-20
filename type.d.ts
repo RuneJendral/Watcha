@@ -75,6 +75,12 @@ interface Props{
     onSubmit?: () => void;
 }
 
+interface AddToWatchlistProps{
+  visible: boolean;
+  onClose: () => void;
+  onSelectWatchlist: (watchlistId: string) => void;
+}
+
 interface Movie {
   id: number;
   title: string;
@@ -180,4 +186,16 @@ interface WatchlistMember {
   id: string;
   watchlistId?: string[];
   user_id?: string[];
+}
+
+interface WatchlistMovies {
+  id: string;
+  watchlistIds: string[];
+  user_id?: string[];
+  movie_id: string;
+  searchTerm: string;
+  movie_id: number;
+  title: string;
+  poster_url: string;
+  createdAt: string;
 }

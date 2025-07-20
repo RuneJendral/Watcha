@@ -1,4 +1,4 @@
-import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, SignInParams, TrendingMovie, Watchlist } from '@/type';
+import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, SignInParams, TrendingMovie, Watchlist, WatchlistMovies } from '@/type';
 import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -9,7 +9,8 @@ export const appwriteConfig = {
     userCollectionId: process.env.EXPO_PUBLIC_APPWRITE_USER_COLLECTION_ID!,
     movieCollectionId: process.env.EXPO_PUBLIC_APPWRITE_METRICS_COLLECTION_ID!,
     watchlistCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_COLLECTION_ID!,
-    watchlistMemberCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_MEMBERS_COLLECTION_ID!
+    watchlistMemberCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_MEMBERS_COLLECTION_ID!,
+    watchlistMovieCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_MOVIES_COLLECTION_ID!
 }
 
 export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!).setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!).setPlatform(appwriteConfig.platform);
@@ -200,8 +201,6 @@ export const getUserWatchlists  = async (): Promise<Watchlist[] | undefined> => 
             [Query.equal('user_ids', currentAccount.$id)]
         );
 
-        console.log(memberLinks.documents.map(doc => doc.watchlist_id));
-
         const watchlistIds = memberLinks.documents.map(doc => doc.watchlist_id);
 
         const watchlists = await database.listDocuments(
@@ -214,5 +213,34 @@ export const getUserWatchlists  = async (): Promise<Watchlist[] | undefined> => 
     }   catch (error){
         console.log(error);
         return undefined;
+    }
+}
+
+export const getWatchlistMovies = async (watchlist_id: string): Promise<WatchlistMovies[] | undefined> => {
+    try{
+        const watchlistMovies = await database.listDocuments(
+            appwriteConfig.databaseId, 
+            appwriteConfig.watchlistMovieCollectionId, 
+            [Query.equal('watchlist_ids', watchlist_id)]
+        );
+
+    return watchlistMovies.documents as unknown as WatchlistMovies[];
+    }   catch (error){
+        console.log(error);
+        return undefined;
+    }
+}
+
+export const addMovieToWatchlist = async ({movieId, watchlistId}: {movieId: number; watchlistId: string;}) => {
+    try {
+        const existing = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.watchlistMovieCollectionId,
+            [Query.equal('movie_id', movieId)]
+        );
+
+
+    } catch (error) {
+        
     }
 }

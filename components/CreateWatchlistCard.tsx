@@ -4,7 +4,7 @@ import { Image, Text, TouchableOpacity, View } from 'react-native';
 
 const CreateWatchlistCard = () => {  
   return (
-   <TouchableOpacity className="bg-primary rounded-xl overflow-hidden border-2 border-accent my-2 w-[48%]">
+   <TouchableOpacity className="bg-primary rounded-xl overflow-hidden border-2 border-accent my-2 w-[45%]">
 
         <View className="bg-accent  p-4 rounded-lg">
             <Text className="text-black font-bold">add Watchlist</Text>
