@@ -3,6 +3,7 @@ import useAuthStore from "@/store/auth.store";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { StatusBar } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./global.css";
 
 export default function RootLayout() {
@@ -16,14 +17,16 @@ export default function RootLayout() {
   if(isLoading) return null;
 
   return (
-  <>
-    <StatusBar hidden={true}/>
+  <SafeAreaProvider>
+    <>
+      <StatusBar hidden={true}/>
 
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
-      <Stack.Screen name="(auth)" options={{headerShown: false}}/>
-      <Stack.Screen name="settings" options={{headerShown: false}}/>
-    </Stack>
-  </>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
+        <Stack.Screen name="(auth)" options={{headerShown: false}}/>
+        <Stack.Screen name="settings" options={{headerShown: false}}/>
+      </Stack>
+    </>
+  </SafeAreaProvider>
   );
 }

@@ -6,6 +6,7 @@ import { MovieInfoProps } from '@/type';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const MovieInfo = ({label, value }: MovieInfoProps) => (
   <View className="flex-col items-start justify-center mt-5">
@@ -20,7 +21,7 @@ const movieDetails = () => {
   const { id } = useLocalSearchParams();
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const {data: movie, loading} = useFetch(() =>
+  const {data: movie} = useFetch(() =>
     fetchMovieDetails(id as string), true, [id]
   );
   
@@ -31,19 +32,23 @@ const movieDetails = () => {
     return (dateName)
   }
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [modalVisible, setModalVisible] = useState(false);
   
   return (
-    <View className="bg-primary flex-1">
+    <SafeAreaView className="bg-primary flex-1 pb-4">
       <ScrollView contentContainerStyle={{paddingBottom: 80}}>
-
+        
+        {movie && (
           <AddToWatchlistModal
-            visible={modalVisible}
-            onClose={() => setModalVisible(false)}
-            onSelectWatchlist={(id) => {
-              setModalVisible(false);
-            }}
-          />
+              visible={modalVisible}
+              movie={movie}
+              onClose={() => setModalVisible(false)}
+              onSelectWatchlist={(id) => {
+                setModalVisible(false);
+              }}
+            />
+          )}
         
           <View>
             <Image source={{ uri: `https://image.tmdb.org/t/p/w500${movie?.poster_path}`}} className="w-full h-[550px]" resizeMode="stretch"/>
@@ -87,7 +92,7 @@ const movieDetails = () => {
 
           </View> 
       </ScrollView>
-    </View>
+    </SafeAreaView>
   )
 }
 

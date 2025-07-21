@@ -1,4 +1,4 @@
-import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, SignInParams, TrendingMovie, Watchlist, WatchlistMovies } from '@/type';
+import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, MovieDetails, SignInParams, TrendingMovie, Watchlist, WatchlistMovies } from '@/type';
 import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -172,8 +172,6 @@ export const updateSearchCount = async (query: string, movie: Movie) =>{
         console.log(error);
         throw error;
     }
-
-    
 }
 
 export const getTrendingMovies = async (): Promise<TrendingMovie[] | undefined> => {
@@ -190,7 +188,7 @@ export const getTrendingMovies = async (): Promise<TrendingMovie[] | undefined> 
     }
 }
 
-export const getUserWatchlists  = async (): Promise<Watchlist[] | undefined> => {
+export const getUserWatchlists = async (): Promise<Watchlist[] | undefined> => {
     try{
         const currentAccount = await account.get();
         if(!currentAccount) throw Error;
@@ -231,16 +229,48 @@ export const getWatchlistMovies = async (watchlist_id: string): Promise<Watchlis
     }
 }
 
-export const addMovieToWatchlist = async ({movieId, watchlistId}: {movieId: number; watchlistId: string;}) => {
+export const addMovieToWatchlist = async (watchlistId: string, movieId: string, movie: MovieDetails) =>{
+
+    if (!watchlistId || !movie?.id || !movie?.title) return;
+
     try {
-        const existing = await database.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.watchlistMovieCollectionId,
-            [Query.equal('movie_id', movieId)]
-        );
+        const existing = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMovieCollectionId,[Query.equal('movie_id', movieId)]);
 
+        if(existing.total > 0){
 
+            const doc = existing.documents[0];
+
+            const currentWatchlists: string[] = doc.watchlist_ids ?? [];
+
+            if(!currentWatchlists.includes(watchlistId)){
+
+                const updatedWatchlists = [...currentWatchlists, watchlistId];
+
+                await database.updateDocument(
+                appwriteConfig.databaseId,
+                appwriteConfig.watchlistMovieCollectionId,
+                doc.$id,
+                {
+                    watchlist_ids: updatedWatchlists
+                }
+            );} else{
+                console.log("Movie already exist in selected Watchlist");
+            }
+        }else {
+            await database.createDocument(
+                appwriteConfig.databaseId, 
+                appwriteConfig.watchlistMovieCollectionId, 
+                ID.unique(), {
+                    movie_id: movieId,
+                    watchlist_ids: [watchlistId],
+                    title: movie.title,
+                    poster_url: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+                    createdAt: new Date().toISOString()
+                }
+            );
+        }
     } catch (error) {
-        
+        console.log(error);
+        throw error;
     }
 }

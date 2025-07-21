@@ -79,7 +79,10 @@ interface AddToWatchlistProps{
   visible: boolean;
   onClose: () => void;
   onSelectWatchlist: (watchlistId: string) => void;
+  movie: MovieDetails;
 }
+
+
 
 interface Movie {
   id: number;
@@ -189,12 +192,9 @@ interface WatchlistMember {
 }
 
 interface WatchlistMovies {
-  id: string;
+  $id: string;
   watchlistIds: string[];
-  user_id?: string[];
   movie_id: string;
-  searchTerm: string;
-  movie_id: number;
   title: string;
   poster_url: string;
   createdAt: string;

@@ -14,6 +14,7 @@ const group = () => {
   | { type: 'create' }
   | (WatchlistProps & { type: 'watchlist' });
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const {data: watchlists, loading: watchlistsLoading, error: watchlistsError} = useFetch(getUserWatchlists, true, []);
 
  const extendedWatchlists: WatchlistItem[] = [

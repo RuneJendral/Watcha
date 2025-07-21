@@ -1,10 +1,10 @@
-import { getUserWatchlists } from '@/services/appwrite';
+import { addMovieToWatchlist, getUserWatchlists } from '@/services/appwrite';
 import { AddToWatchlistProps, Watchlist } from '@/type';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
 import WatchlistModalCard from './WatchlistModalCard';
 
-const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, onSelectWatchlist }) => {
+const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, onSelectWatchlist, movie }) => {
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,8 +24,18 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
     if (visible) fetchWatchlists(); 
   }, [visible]);
 
+  const handleAddMovie = async (watchlistId: string) => {
+  try {
+    await addMovieToWatchlist(watchlistId, movie.id.toString(), movie);
+    onSelectWatchlist(watchlistId);
+    onClose(); 
+  } catch (e) {
+    console.error('Could not add movie to watchlist', e);
+  }
+};
+
   const renderItem = ({ item }: { item: Watchlist }) => (
-    <TouchableOpacity onPress={() => onSelectWatchlist(item.id)}>
+    <TouchableOpacity className="bg-light-200 rounded-lg my-2" onPress={() => handleAddMovie(item.id)}>
       <WatchlistModalCard id={item.id} name={item.name} />
     </TouchableOpacity>
   );
@@ -35,8 +45,8 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
     <SafeAreaView className="flex-1 justify-center items-center bg-white">
       <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
         <View className="flex-1 justify-center items-center bg-black/20">
-          <View className="bg-white rounded-2xl p-6 w-72 shadow-lg">
-            <Text className="text-start text-base text-black mb-4">Add to Watchlist</Text>
+          <View className="bg-dark-100 rounded-2xl p-6 w-72 shadow-lg">
+            <Text className="text-start text-base text-white mb-4">Add to Watchlist</Text>
 
                 {loading ? (
                   <ActivityIndicator color="#fff" />
