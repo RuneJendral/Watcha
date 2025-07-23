@@ -4,7 +4,7 @@
     "slug": "Watcha",
     "version": "0.0.1",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/adaptive-icon.png",
     "scheme": "movies",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -12,10 +12,7 @@
       "supportsTablet": true
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
-        "backgroundColor": "#ffffff"
-      },
+      "icon":"./assets/images/adaptive-icon.png",
       "edgeToEdgeEnabled": true,
       "package": "com.runejendral.Watcha"
     },
@@ -29,9 +26,8 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo.png",
+          "image": "./assets/images/adaptive-icon.png",
           "imageWidth": 200,
-          "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
       ]
