@@ -262,8 +262,6 @@ export const createWatchlist = async (watchlistName: string) => {
 }
 
 export const deleteWatchlist = async (watchlistId: string) => {
-    if (!watchlistId) return;
-
     try{
         const existingWatchlist = await database.getDocument(
             appwriteConfig.databaseId,
@@ -302,8 +300,6 @@ export const deleteWatchlist = async (watchlistId: string) => {
 }
 
 export const addUserToWatchlist = async (watchlistId: string, userId: string) => {
-    if (!watchlistId || !userId) return;
-
     try {
         const currentWatchlist = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMemberCollectionId,[Query.equal('watchlist_id', watchlistId)]);
 
@@ -345,8 +341,6 @@ export const addUserToWatchlist = async (watchlistId: string, userId: string) =>
 }
 
 export const removeUserFromWatchlist = async (watchlistId: string, userId: string) => {
-    if (!watchlistId || !userId) return;
-
     try {
         const currentWatchlist = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMemberCollectionId,[Query.equal('watchlist_id', watchlistId)]);
 
@@ -381,9 +375,6 @@ export const removeUserFromWatchlist = async (watchlistId: string, userId: strin
 }
 
 export const addMovieToWatchlist = async (watchlistId: string, movieId: string, movie: MovieDetails) =>{
-
-    if (!watchlistId || movieId || !movie) return;
-
     try {
         const existing = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMovieCollectionId,[Query.equal('movie_id', movieId)]);
 
@@ -427,9 +418,6 @@ export const addMovieToWatchlist = async (watchlistId: string, movieId: string, 
 }
 
 export const removeMovieFromWatchlist = async (watchlistId: string, movieId: string) =>{
-
-    if (!watchlistId || !movieId) return;
-
     try {
         const existing = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMovieCollectionId,[Query.equal('movie_id', movieId)]);
 
