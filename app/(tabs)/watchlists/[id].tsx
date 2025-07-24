@@ -1,11 +1,11 @@
-import WatchlistMovieCard from '@/components/WatchlistMovieCard';
-import { getWatchlistMovies } from '@/services/appwrite';
+import WatchlistMovieCard from '@/components/WatchlistView/WatchlistMovieCard';
+import { images } from '@/constants/images';
+import { getMoviesWatchlist } from '@/services/appwrite';
 import useFetch from '@/services/useFetch';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback } from 'react';
-import { ActivityIndicator, FlatList, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, FlatList, Image, ScrollView, Text, View } from 'react-native';
 
 
 const WatchlistCollection = () => {
@@ -16,7 +16,7 @@ const WatchlistCollection = () => {
     loading: watchlistLoading,
     error: watchlistError,
     refetch: refetchWatchlistMovies
-  } = useFetch(() => getWatchlistMovies(id as string), true, [id]);
+  } = useFetch(() => getMoviesWatchlist(id as string), true, [id]);
 
   useFocusEffect(
   useCallback(() => {
@@ -35,12 +35,15 @@ const WatchlistCollection = () => {
       />
   );
 
-  
-
   return (
-    <SafeAreaView className="bg-primary flex-1 pb-8">
+    <View className="flex-1 bg-primary">
+      <Image source={images.bg} className="absolute w-full y-0"/>
+      
+      <ScrollView className="flex-1 px-5 item-center" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
+        <Text className="text-lg text-white font-bold mb-3 mt-10">Watchlist Name</Text>
+      
         {watchlistLoading ? (
-           <ActivityIndicator
+            <ActivityIndicator
                       size="large"
                       color="#0000ff"
                       className="mt-10 self-center"
@@ -49,6 +52,7 @@ const WatchlistCollection = () => {
           <Text>Error: {watchlistError?.message}</Text>
         ) : (
           <FlatList
+            scrollEnabled={false}
             data={watchlistMovies}
             numColumns={3}
             keyExtractor={(item) => item.$id}
@@ -56,12 +60,13 @@ const WatchlistCollection = () => {
             contentContainerStyle={{ paddingBottom: 20, paddingTop: 10, gap: 16 }}
             columnWrapperStyle={{justifyContent: 'flex-start', gap: 15, paddingRight: 5, marginBottom: 10,  marginLeft: 2,}}
             className="mt-2 pb-32 "
-             ListHeaderComponent={
+              ListHeaderComponent={
               <Text className="text-lg text-white font-bold mb-3 mt-10">Watchlist:</Text>
             }
           />
         )}
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 };
 

@@ -214,7 +214,7 @@ export const getUserWatchlists = async (): Promise<Watchlist[] | undefined> => {
     }
 }
 
-export const getWatchlistMovies = async (watchlist_id: string): Promise<WatchlistMovies[] | undefined> => {
+export const getMoviesWatchlist = async (watchlist_id: string): Promise<WatchlistMovies[] | undefined> => {
     try{
         const watchlistMovies = await database.listDocuments(
             appwriteConfig.databaseId, 
@@ -229,9 +229,160 @@ export const getWatchlistMovies = async (watchlist_id: string): Promise<Watchlis
     }
 }
 
+export const createWatchlist = async (watchlistName: string) => {
+    if (!watchlistName) return;
+
+    try{
+        const existingWatchlistMovies = await database.listDocuments(
+            appwriteConfig.databaseId, 
+            appwriteConfig.watchlistCollectionId, 
+            [Query.equal('name', watchlistName)]
+        );
+
+        if(existingWatchlistMovies.total > 0){
+            throw new Error(`watchlist with the name ${watchlistName} already exist`);
+        } else {
+            const newWatchlist = await database.createDocument(
+                appwriteConfig.databaseId, 
+                appwriteConfig.watchlistCollectionId, 
+                ID.unique(), 
+                {name: watchlistName}
+            );
+
+            const currentAccount = await account.get();
+            if(!currentAccount) throw Error;
+
+            addUserToWatchlist(newWatchlist.$id, currentAccount.$id);
+        }
+
+    }   catch (error){
+        console.log(error);
+        throw error;
+    }
+}
+
+export const deleteWatchlist = async (watchlistId: string) => {
+    if (!watchlistId) return;
+
+    try{
+        const existingWatchlist = await database.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.watchlistCollectionId,
+            watchlistId
+        );
+
+        if(existingWatchlist.total > 0){
+
+            //DELETE MEMBER COLLECTION
+            const existingWatchlistUserCollection = await database.listDocuments(
+                appwriteConfig.databaseId, 
+                appwriteConfig.watchlistMemberCollectionId, 
+                [Query.equal('watchlist_id', watchlistId)]
+            );
+
+            const doc = existingWatchlistUserCollection.documents[0];       
+
+            await database.deleteDocument(
+                appwriteConfig.databaseId,
+                appwriteConfig.watchlistMemberCollectionId,
+                doc.$id
+            );
+            
+            //DELETE MOVIE COLLECTION ENTRYS
+
+
+        } else {
+           console.log("watchlist could not be found");
+        }
+
+    }   catch (error){
+        console.log(error);
+        throw error;
+    }
+}
+
+export const addUserToWatchlist = async (watchlistId: string, userId: string) => {
+    if (!watchlistId || !userId) return;
+
+    try {
+        const currentWatchlist = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMemberCollectionId,[Query.equal('watchlist_id', watchlistId)]);
+
+        if(currentWatchlist.total > 0){
+
+            const doc = currentWatchlist.documents[0];
+
+            const existingUsers: string[] = doc.user_ids ?? [];
+
+            if(!existingUsers.includes(userId)){
+
+                const updatedUserList = [...existingUsers, userId];
+
+                await database.updateDocument(
+                appwriteConfig.databaseId,
+                appwriteConfig.userCollectionId,
+                doc.$id,
+                {
+                    user_ids: updatedUserList
+                }
+            );} else{
+                console.log("User already exist in selected Watchlist");
+            }
+        }else {
+            await database.createDocument(
+                appwriteConfig.databaseId, 
+                appwriteConfig.watchlistMemberCollectionId, 
+                ID.unique(), 
+                {
+                    watchlist_id: watchlistId,
+                    user_ids: [userId]
+                }
+            );
+        }
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+export const removeUserFromWatchlist = async (watchlistId: string, userId: string) => {
+    if (!watchlistId || !userId) return;
+
+    try {
+        const currentWatchlist = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMemberCollectionId,[Query.equal('watchlist_id', watchlistId)]);
+
+        if(currentWatchlist.total > 0){
+
+            const doc = currentWatchlist.documents[0];
+
+            const existingUsers: string[] = doc.user_ids ?? [];
+
+            if(existingUsers.includes(userId)){
+
+                const updatedUserList = existingUsers.filter(id => id !== userId);
+
+                await database.updateDocument(
+                    appwriteConfig.databaseId,
+                    appwriteConfig.userCollectionId,
+                    doc.$id,
+                    {
+                        user_ids: updatedUserList
+                    }
+                );} 
+            else{
+                console.log("user could not be found in selected Watchlist");
+            }
+        }else {
+           console.log("watchlist could not be found in watchlist member collection");
+        }
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 export const addMovieToWatchlist = async (watchlistId: string, movieId: string, movie: MovieDetails) =>{
 
-    if (!watchlistId || !movie?.id || !movie?.title) return;
+    if (!watchlistId || movieId || !movie) return;
 
     try {
         const existing = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMovieCollectionId,[Query.equal('movie_id', movieId)]);
@@ -269,6 +420,52 @@ export const addMovieToWatchlist = async (watchlistId: string, movieId: string, 
                 }
             );
         }
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+export const removeMovieFromWatchlist = async (watchlistId: string, movieId: string) =>{
+
+    if (!watchlistId || !movieId) return;
+
+    try {
+        const existing = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMovieCollectionId,[Query.equal('movie_id', movieId)]);
+
+        if(existing.total > 0){
+
+            const doc = existing.documents[0];
+
+            const currentWatchlists: string[] = doc.watchlist_ids ?? [];
+
+            if(currentWatchlists.includes(watchlistId)){
+
+                const updatedWatchlists = currentWatchlists.filter(id => id !== watchlistId);
+
+                 if (updatedWatchlists.length > 0) {
+                    await database.updateDocument(
+                        appwriteConfig.databaseId,
+                        appwriteConfig.watchlistMovieCollectionId,
+                        doc.$id,
+                        {
+                            watchlist_ids: updatedWatchlists
+                        }
+                    );
+                } else {
+                    await database.deleteDocument(
+                        appwriteConfig.databaseId,
+                        appwriteConfig.watchlistMovieCollectionId,
+                        doc.$id
+                    );
+                }
+               
+                } else{
+                    console.log("watchlist Id caonnot be found in current watchlist");
+                }
+            }else {
+             console.log("Movie cannot be found");
+            }
     } catch (error) {
         console.log(error);
         throw error;

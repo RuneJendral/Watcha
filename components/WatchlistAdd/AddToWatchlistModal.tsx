@@ -2,7 +2,7 @@ import { addMovieToWatchlist, getUserWatchlists } from '@/services/appwrite';
 import { AddToWatchlistProps, Watchlist } from '@/type';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
-import WatchlistModalCard from './WatchlistModalCard';
+import WatchlistModalCard from '../WatchlistView/WatchlistModalCard';
 
 const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, onSelectWatchlist, movie }) => {
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
@@ -45,7 +45,7 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
     <SafeAreaView className="flex-1 justify-center items-center bg-white">
       <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
         <View className="flex-1 justify-center items-center bg-black/20">
-          <View className="bg-dark-100 rounded-2xl p-6 w-72 shadow-lg">
+          <View className="bg-dark-100 rounded-2xl p-6 w-72 max-h-[40%] shadow-lg">
             <Text className="text-start text-base text-white mb-4">Add to Watchlist</Text>
 
                 {loading ? (
@@ -56,6 +56,8 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     ItemSeparatorComponent={() => <View className="h-2" />}
+                    scrollEnabled={true}
+                    contentContainerStyle={{ paddingBottom: 10 }}
                   />
                 )}
 

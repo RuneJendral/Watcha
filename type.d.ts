@@ -82,7 +82,10 @@ interface AddToWatchlistProps{
   movie: MovieDetails;
 }
 
-
+interface CreateWatchlistProps{
+  visible: boolean;
+  onClose: () => void;
+}
 
 interface Movie {
   id: number;

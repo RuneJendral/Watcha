@@ -1,12 +1,12 @@
-import CreateWatchlistCard from '@/components/CreateWatchlistCard'
-import WatchlistCard from '@/components/WatchlistCard'
+import CreateWatchlistCard from '@/components/WatchlistCreation/CreateWatchlistCard'
+import WatchlistCard from '@/components/WatchlistView/WatchlistCard'
 import { icons } from '@/constants/icons'
 import { images } from '@/constants/images'
 import { getUserWatchlists } from '@/services/appwrite'
 import useFetch from '@/services/useFetch'
 import { WatchlistProps } from '@/type'
 import React from 'react'
-import { ActivityIndicator, FlatList, Image, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native'
 
 const group = () => {
 
@@ -15,7 +15,7 @@ const group = () => {
   | (WatchlistProps & { type: 'watchlist' });
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const {data: watchlists, loading: watchlistsLoading, error: watchlistsError} = useFetch(getUserWatchlists, true, []);
+ const {data: watchlists, loading: watchlistsLoading, error: watchlistsError, refetch: refetchWatchlist} = useFetch(getUserWatchlists, true, []);
 
  const extendedWatchlists: WatchlistItem[] = [
   { type: 'create' },
@@ -24,8 +24,8 @@ const group = () => {
 
 
   return (
-    <View className="flex-1 bg-primary">
-      <Image source={images.bg} className="absolute w-full y-0"/>
+    <KeyboardAvoidingView className="flex-1 bg-primary" behavior={'padding'} keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
+        <Image source={images.bg} className="absolute w-full y-0"/>
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
         <Image source={icons.logo} className="w-10 h-10 mt-20 mb-5 mx-auto"/>
 
@@ -51,14 +51,14 @@ const group = () => {
                 data={extendedWatchlists}
                 renderItem={({ item }) => {
                     if (item.type === 'create') {
-                      return <CreateWatchlistCard />;
+                      return <CreateWatchlistCard refetchWatchlists={refetchWatchlist}/>;
                     }
 
                     return <WatchlistCard name={item.name} id={item.id} />;
                 }}
                 keyExtractor={(item, index) => item.type === 'watchlist' ? item.id.toString() : `create-${index}`}
                 numColumns={2}
-                columnWrapperStyle={{justifyContent: 'center', gap: 18, paddingRight: 5, marginBottom: 10}}
+                columnWrapperStyle={{justifyContent: 'flex-start', gap: 20, paddingRight: 5, marginBottom: 20}}
                 className="mt-2 pb-32"
                 scrollEnabled={false}>
                </FlatList>
@@ -66,7 +66,7 @@ const group = () => {
           </View>
         )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   )
 }
 
