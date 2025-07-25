@@ -168,9 +168,20 @@ interface TrendingCardProps {
 type WatchlistProps = {
   id: string;
   name: string;
-  description?: string;
-  imageUrl?: string;
+  selected: boolean;
+  onPress?: () => void;
+  onLongPress?: () => void;
 };
+
+type WatchlistModal = {
+  id: string;
+  name: string;
+};
+
+type CreateWatchlistCardProps ={
+  inSelectionMode: boolean; 
+  refetchWatchlists: () => void;
+}
 
 interface SettingsItemProps {
     icon: ImageSourcePropType;

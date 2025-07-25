@@ -2,13 +2,17 @@ import CreateWatchlistCard from '@/components/WatchlistCreation/CreateWatchlistC
 import WatchlistCard from '@/components/WatchlistView/WatchlistCard'
 import { icons } from '@/constants/icons'
 import { images } from '@/constants/images'
-import { getUserWatchlists } from '@/services/appwrite'
+import { deleteWatchlist, getUserWatchlists } from '@/services/appwrite'
 import useFetch from '@/services/useFetch'
 import { WatchlistProps } from '@/type'
-import React from 'react'
-import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native'
+import { router } from 'expo-router'
+import React, { useState } from 'react'
+import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const group = () => {
+
+  const [selectedWatchlists, setSelectedWatchlists] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
 
   type WatchlistItem = 
   | { type: 'create' }
@@ -19,9 +23,44 @@ const group = () => {
 
  const extendedWatchlists: WatchlistItem[] = [
   { type: 'create' },
-  ...(Array.isArray(watchlists) ? watchlists.map(w => ({ ...w, type: 'watchlist' as const })) : [])
+  ...(Array.isArray(watchlists) ? 
+  watchlists.map(w => ({
+    ...w,
+    type: 'watchlist' as const,
+    selected: selectedWatchlists.includes(w.id),
+  })) 
+: [])
 ];
 
+  const toggleSelection = (id: string) => {
+  if (selectedWatchlists.includes(id)) {
+    setSelectedWatchlists(prev => prev.filter(w => w !== id));
+  } else {
+    setSelectedWatchlists(prev => [...prev, id]);
+  }
+};
+
+const handleLongPress = (id: string) => {
+  setSelectionMode(true);
+  toggleSelection(id);
+};
+
+const clearSelection = () => {
+  setSelectionMode(false);
+  setSelectedWatchlists([]);
+};
+
+const handleDeleteSelected = async () => {
+  for (const watchlistId of selectedWatchlists) {
+    await deleteWatchlist(watchlistId);
+  }
+
+  clearSelection();
+
+  setTimeout(() => { //timeout because appwrite is not so fast in deleting the selected watchlists
+    refetchWatchlist();
+  }, 600);
+}
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-primary" behavior={'padding'} keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
@@ -46,15 +85,45 @@ const group = () => {
               </View>
             )}
 
+            {selectionMode && (
+              <View className="my-4">
+                <TouchableOpacity
+                  className="bg-red-600 py-2 rounded-xl items-center"
+                  onPress={handleDeleteSelected} 
+                >
+                  <Text className="text-white font-bold">Delete {selectedWatchlists.length} Watchlists</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={clearSelection}
+                  className="mt-2 items-center"
+                >
+                  <Text className="text-white underline">Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <>
               <FlatList 
                 data={extendedWatchlists}
                 renderItem={({ item }) => {
                     if (item.type === 'create') {
-                      return <CreateWatchlistCard refetchWatchlists={refetchWatchlist}/>;
+                      return <CreateWatchlistCard refetchWatchlists={refetchWatchlist} inSelectionMode={selectionMode}/>;
                     }
 
-                    return <WatchlistCard name={item.name} id={item.id} />;
+                    return (
+                      <WatchlistCard
+                        name={item.name}
+                        id={item.id}
+                        selected={selectedWatchlists.includes(item.id)}
+                        onLongPress={() => handleLongPress(item.id)}
+                        onPress={() =>
+                          selectionMode
+                            ? toggleSelection(item.id)
+                            : router.push(`/(tabs)/watchlists/${item.id}`)
+                        }
+                      />
+                    );
                 }}
                 keyExtractor={(item, index) => item.type === 'watchlist' ? item.id.toString() : `create-${index}`}
                 numColumns={2}

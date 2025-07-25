@@ -1,9 +1,10 @@
 import { icons } from '@/constants/icons';
+import { CreateWatchlistCardProps } from '@/type';
 import React, { useState } from 'react';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 import CreateWatchlistModal from './CreateWatchlistModal';
 
-const CreateWatchlistCard = ({ refetchWatchlists }: { refetchWatchlists: () => void }) => {  
+const CreateWatchlistCard = ({inSelectionMode, refetchWatchlists }: CreateWatchlistCardProps) => {  
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -11,7 +12,7 @@ const CreateWatchlistCard = ({ refetchWatchlists }: { refetchWatchlists: () => v
     <>
       <TouchableOpacity
         className="bg-dark-100 rounded-xl w-[45%]"
-        onPress={() => setModalVisible(true)}
+        onPress={() => inSelectionMode ? setModalVisible(false) : setModalVisible(true)}
       >
         <View className="bg-accent p-4 rounded-lg">
           <Text className="text-black font-bold">add Watchlist</Text>
