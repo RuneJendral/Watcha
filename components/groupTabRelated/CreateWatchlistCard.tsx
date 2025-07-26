@@ -11,7 +11,7 @@ const CreateWatchlistCard = ({inSelectionMode, refetchWatchlists }: CreateWatchl
   return (
     <>
       <TouchableOpacity
-        className="bg-dark-100 rounded-xl w-[45%]"
+        className="bg-dark-100 rounded-xl w-[47%]"
         onPress={() => inSelectionMode ? setModalVisible(false) : setModalVisible(true)}
       >
         <View className="bg-accent p-4 rounded-lg">

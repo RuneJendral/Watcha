@@ -229,6 +229,22 @@ export const getMoviesWatchlist = async (watchlist_id: string): Promise<Watchlis
     }
 }
 
+export const getWatchlistName = async (watchlist_id: string): Promise<string | undefined> => {
+    try{
+
+        const watchlist = await database.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.watchlistCollectionId,
+            watchlist_id
+        );
+
+    return watchlist.name;
+    }   catch (error){
+        console.log(error);
+        return undefined;
+    }
+}
+
 export const createWatchlist = async (watchlistName: string) => {
     try{
         const existingWatchlistMovies = await database.listDocuments(

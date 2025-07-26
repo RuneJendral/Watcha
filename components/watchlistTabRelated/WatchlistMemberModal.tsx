@@ -1,10 +1,10 @@
-import { addMovieToWatchlist, getUserWatchlists } from '@/services/appwrite';
-import { AddToWatchlistProps, Watchlist } from '@/type';
+import { getUserWatchlists } from '@/services/appwrite';
+import { CreateWatchlistProps, Watchlist } from '@/type';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
 
-const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, onSelectWatchlist, movie }) => {
-  const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
+const WatchlistMemberModal : React.FC<CreateWatchlistProps & { refetchWatchlists: () => void }> = ({ visible, onClose, refetchWatchlists }) => { 
+   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,8 +25,7 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
 
   const handleAddMovie = async (watchlistId: string) => {
   try {
-    await addMovieToWatchlist(watchlistId, movie.id.toString(), movie);
-    onSelectWatchlist(watchlistId);
+
     onClose(); 
   } catch (e) {
     console.error('Could not add movie to watchlist', e);
@@ -35,9 +34,9 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
 
   const renderItem = ({ item }: { item: Watchlist }) => (
     <TouchableOpacity className="bg-light-200 rounded-lg my-2" onPress={() => handleAddMovie(item.id)}>
-     <View className="p-2">
-        <Text className="text-black font-bold">{item.name}</Text>
-      </View>
+        <View className="p-2">
+            <Text className="text-black font-bold">{item.name}</Text>
+        </View>
     </TouchableOpacity>
   );
 
@@ -72,4 +71,4 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
   );
 };
 
-export default AddToWatchlistModal
+export default WatchlistMemberModal

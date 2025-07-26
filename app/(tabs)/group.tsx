@@ -65,7 +65,7 @@ const handleDeleteSelected = async () => {
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-primary" behavior={'padding'} keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
-        <Image source={images.bg} className="absolute w-full y-0"/>
+      <Image source={images.bg} className="absolute w-full y-0"/>
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
         <Image source={icons.logo} className="w-10 h-10 mt-20 mb-5 mx-auto"/>
 

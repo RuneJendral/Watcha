@@ -1,10 +1,11 @@
 import WatchlistMovieCard from '@/components/groupTabRelated/WatchlistMovieCard';
+import { icons } from '@/constants/icons';
 import { images } from '@/constants/images';
-import { getMoviesWatchlist, removeMovieFromWatchlist } from '@/services/appwrite';
+import { getMoviesWatchlist, getWatchlistName, removeMovieFromWatchlist } from '@/services/appwrite';
 import useFetch from '@/services/useFetch';
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 
@@ -12,6 +13,7 @@ const WatchlistCollection = () => {
   const { id } = useLocalSearchParams();
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
+  const [watchlistName, setWatchlistName] = useState<string | undefined>();
 
   const {
     data: watchlistMovies,
@@ -57,6 +59,17 @@ const WatchlistCollection = () => {
     }, 600);
   }
 
+  useEffect(() => {
+    const fetchWatchlistName = async () => {
+      if (id) {
+        const name = await getWatchlistName(id as string);
+        setWatchlistName(name);
+      }
+    };
+
+    fetchWatchlistName();
+  }, [id]);
+
   const renderMovie = ({ item }: any) => (
     <WatchlistMovieCard
       $id={item.movie_id}
@@ -79,22 +92,25 @@ const WatchlistCollection = () => {
     <View className="flex-1 bg-primary">
       <Image source={images.bg} className="absolute w-full y-0"/>
       
-      <ScrollView className="flex-1 px-5 item-center" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
-        <Text className="text-lg text-white font-bold mb-3 mt-10">Watchlist Name</Text>
+      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
+        <View className="flex-row items-center justify-between pt-20 mb-3">
+          <View className="flex-row items-center space-x-2">
+            <Text className="text-lg text-white font-bold">{watchlistName ?? 'loading watchlist...'}</Text>
+          </View>
+
+            <TouchableOpacity className="flex-row items-center mr-4" onPress={() => {/* open members modal */}}>
+              <Image source={icons.leftArrow} className="w-5 h-5 mr-2" resizeMode="contain" />
+              <Image source={icons.groupHighlight} className="w-6 h-6" resizeMode="contain" />
+            </TouchableOpacity>
+        </View>
 
         {selectionMode && (
-          <View className="my-4">
-            <TouchableOpacity
-              className="bg-red-600 py-2 rounded-xl items-center"
-              onPress={handleDeleteSelected} 
-            >
+          <View className="my-1">
+            <TouchableOpacity className="bg-red-600 py-2 rounded-xl items-center"onPress={handleDeleteSelected}>
               <Text className="text-white font-bold">Delete {selectedMovies.length} Movies</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={clearSelection}
-              className="mt-2 items-center"
-            >
+            <TouchableOpacity onPress={clearSelection} className="mt-2 items-center">
               <Text className="text-white underline">Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -117,7 +133,7 @@ const WatchlistCollection = () => {
             renderItem={renderMovie}
             contentContainerStyle={{ paddingBottom: 20, paddingTop: 10, gap: 16 }}
             columnWrapperStyle={{justifyContent: 'flex-start', gap: 15, paddingRight: 5, marginBottom: 10,  marginLeft: 2,}}
-            className="mt-2 pb-32 "
+            className="pb-32 "
               ListHeaderComponent={
               <Text className="text-lg text-white font-bold mb-3 mt-10">Watchlist:</Text>
             }
