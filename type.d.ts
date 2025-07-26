@@ -212,4 +212,7 @@ interface WatchlistMovies {
   title: string;
   poster_url: string;
   createdAt: string;
+  selected: boolean;
+  onPress?: () => void;
+  onLongPress?: () => void;
 }

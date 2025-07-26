@@ -9,7 +9,7 @@ const WatchlistCard = ({ id, name, selected, onLongPress, onPress }: WatchlistPr
 }) => {
   return (
     <TouchableOpacity
-      className={`bg-dark-100 rounded-xl w-[45%] ${selected ? 'border-2 border-accent' : ''}`}
+      className={`bg-dark-100 rounded-xl w-[45%] ${selected ? 'border-2 border-accent rounded-lg' : ''}`}
       onLongPress={onLongPress}
       onPress={onPress}
     >

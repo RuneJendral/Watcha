@@ -1,5 +1,6 @@
-import CreateWatchlistCard from '@/components/WatchlistCreation/CreateWatchlistCard'
-import WatchlistCard from '@/components/WatchlistView/WatchlistCard'
+
+import CreateWatchlistCard from '@/components/groupTabRelated/CreateWatchlistCard'
+import WatchlistCard from '@/components/groupTabRelated/WatchlistCard'
 import { icons } from '@/constants/icons'
 import { images } from '@/constants/images'
 import { deleteWatchlist, getUserWatchlists } from '@/services/appwrite'

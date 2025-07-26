@@ -2,7 +2,7 @@ import { addMovieToWatchlist, getUserWatchlists } from '@/services/appwrite';
 import { AddToWatchlistProps, Watchlist } from '@/type';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
-import WatchlistModalCard from '../WatchlistView/WatchlistModalCard';
+import WatchlistModalCard from './WatchlistModalCard';
 
 const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, onSelectWatchlist, movie }) => {
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);

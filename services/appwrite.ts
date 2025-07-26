@@ -230,8 +230,6 @@ export const getMoviesWatchlist = async (watchlist_id: string): Promise<Watchlis
 }
 
 export const createWatchlist = async (watchlistName: string) => {
-    if (!watchlistName) return;
-
     try{
         const existingWatchlistMovies = await database.listDocuments(
             appwriteConfig.databaseId, 
@@ -263,68 +261,64 @@ export const createWatchlist = async (watchlistName: string) => {
 
 export const deleteWatchlist = async (watchlistId: string) => {
     try{
-        const existingWatchlist = await database.getDocument(
+        //CHECK IF WATCHLIST EXISTS
+        await database.getDocument(
             appwriteConfig.databaseId,
             appwriteConfig.watchlistCollectionId,
             watchlistId
         );
 
-        if(existingWatchlist){
+        //DELETE MEMBER COLLECTION
+        const existingWatchlistUserCollection = await database.listDocuments(
+            appwriteConfig.databaseId, 
+            appwriteConfig.watchlistMemberCollectionId, 
+            [Query.equal('watchlist_id', watchlistId)]
+        );
 
-            //DELETE MEMBER COLLECTION
-            const existingWatchlistUserCollection = await database.listDocuments(
-                appwriteConfig.databaseId, 
-                appwriteConfig.watchlistMemberCollectionId, 
-                [Query.equal('watchlist_id', watchlistId)]
-            );
-
-            for (const memberDoc of existingWatchlistUserCollection.documents) {
-                await database.deleteDocument(
-                    appwriteConfig.databaseId,
-                    appwriteConfig.watchlistMemberCollectionId,
-                    memberDoc.$id
-                );
-            }     
-
-            //DELETE/UPDATE MOVIE COLLECTION
-            const movieCollection = await database.listDocuments(
-                appwriteConfig.databaseId,
-                appwriteConfig.watchlistMovieCollectionId,
-                [Query.equal('watchlist_ids', watchlistId)]
-            );
-
-            for (const movie of movieCollection.documents) {
-                const updatedIds = (movie.watchlist_ids ?? []).filter((id: string) => id !== watchlistId);
-
-                if (updatedIds.length === 0){
-                    await database.deleteDocument(
-                        appwriteConfig.databaseId,
-                        appwriteConfig.watchlistMovieCollectionId,
-                        movie.$id
-                    );
-                } else {
-                    await database.updateDocument(
-                        appwriteConfig.databaseId,
-                        appwriteConfig.watchlistMovieCollectionId,
-                        movie.$id,
-                        { watchlist_ids: updatedIds}
-                    );
-                }
-            }
-
-
-            //DELETE WATCHLIST
+        for (const memberDoc of existingWatchlistUserCollection.documents) {
             await database.deleteDocument(
                 appwriteConfig.databaseId,
-                appwriteConfig.watchlistCollectionId,
-                watchlistId
+                appwriteConfig.watchlistMemberCollectionId,
+                memberDoc.$id
             );
+        }     
 
-            console.log("watchlist deleted")
+        //DELETE/UPDATE MOVIE COLLECTION
+        const movieCollection = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.watchlistMovieCollectionId,
+            [Query.equal('watchlist_ids', watchlistId)]
+        );
 
-        } else {
-           console.log("watchlist could not be found");
+        for (const movie of movieCollection.documents) {
+            const updatedIds = (movie.watchlist_ids ?? []).filter((id: string) => id !== watchlistId);
+
+            if (updatedIds.length === 0){
+                await database.deleteDocument(
+                    appwriteConfig.databaseId,
+                    appwriteConfig.watchlistMovieCollectionId,
+                    movie.$id
+                );
+            } else {
+                await database.updateDocument(
+                    appwriteConfig.databaseId,
+                    appwriteConfig.watchlistMovieCollectionId,
+                    movie.$id,
+                    { watchlist_ids: updatedIds}
+                );
+            }
         }
+
+
+        //DELETE WATCHLIST
+        await database.deleteDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.watchlistCollectionId,
+            watchlistId
+        );
+
+        console.log("watchlist deleted")
+
     }
     catch (error){
         console.log(error);

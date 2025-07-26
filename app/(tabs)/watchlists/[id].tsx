@@ -1,15 +1,17 @@
-import WatchlistMovieCard from '@/components/WatchlistView/WatchlistMovieCard';
+import WatchlistMovieCard from '@/components/groupTabRelated/WatchlistMovieCard';
 import { images } from '@/constants/images';
-import { getMoviesWatchlist } from '@/services/appwrite';
+import { getMoviesWatchlist, removeMovieFromWatchlist } from '@/services/appwrite';
 import useFetch from '@/services/useFetch';
 import { useFocusEffect } from '@react-navigation/native';
-import { useLocalSearchParams } from 'expo-router';
-import React, { useCallback } from 'react';
-import { ActivityIndicator, FlatList, Image, ScrollView, Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 
 const WatchlistCollection = () => {
   const { id } = useLocalSearchParams();
+  const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
 
   const {
     data: watchlistMovies,
@@ -24,6 +26,37 @@ const WatchlistCollection = () => {
   }, [id])
 );
 
+  const toggleSelection = (movieId: string) => {
+    if (selectedMovies.includes(movieId)) {
+      setSelectedMovies(prev => prev.filter(w => w !== movieId));
+    } else {
+      setSelectedMovies(prev => [...prev, movieId]);
+    }
+
+  };
+
+  const handleLongPress = (movieId: string) => {
+    setSelectionMode(true);
+    toggleSelection(movieId);
+  };
+
+  const clearSelection = () => {
+    setSelectionMode(false);
+    setSelectedMovies([]);
+  };
+
+  const handleDeleteSelected = async () => {
+    for (const movieId of selectedMovies) {
+      await removeMovieFromWatchlist(id as string, movieId);
+    }
+
+      clearSelection();
+
+    setTimeout(() => { //timeout because appwrite is not so fast in deleting the selected movies
+      refetchWatchlistMovies();
+    }, 600);
+  }
+
   const renderMovie = ({ item }: any) => (
     <WatchlistMovieCard
       $id={item.movie_id}
@@ -31,7 +64,14 @@ const WatchlistCollection = () => {
       poster_url={item.poster_url} 
       watchlistIds={item.watchlist_ids} 
       movie_id={item.movie_id} 
-      createdAt={item.createdAt}    
+      createdAt={item.createdAt}   
+      selected={selectedMovies.includes(item.movie_id)} 
+      onLongPress={() => handleLongPress(item.movie_id)}
+      onPress={() =>
+        selectionMode
+          ? toggleSelection(item.movie_id)
+          : router.push(`/(tabs)/movies/${item.movie_id}`)
+      }
       />
   );
 
@@ -41,6 +81,24 @@ const WatchlistCollection = () => {
       
       <ScrollView className="flex-1 px-5 item-center" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
         <Text className="text-lg text-white font-bold mb-3 mt-10">Watchlist Name</Text>
+
+        {selectionMode && (
+          <View className="my-4">
+            <TouchableOpacity
+              className="bg-red-600 py-2 rounded-xl items-center"
+              onPress={handleDeleteSelected} 
+            >
+              <Text className="text-white font-bold">Delete {selectedMovies.length} Movies</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={clearSelection}
+              className="mt-2 items-center"
+            >
+              <Text className="text-white underline">Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       
         {watchlistLoading ? (
             <ActivityIndicator

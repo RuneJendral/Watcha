@@ -1,4 +1,4 @@
-import AddToWatchlistModal from '@/components/WatchlistAdd/AddToWatchlistModal';
+import AddToWatchlistModal from '@/components/movieTabRelated/AddToWatchlistModal';
 import { icons } from '@/constants/icons';
 import { fetchMovieDetails } from '@/services/api';
 import useFetch from '@/services/useFetch';
