@@ -17,6 +17,7 @@ export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_
 export const account = new Account(client);
 export const database = new Databases(client);
 const avatars = new Avatars(client);
+const maximumWatchlistCreations  = 3;
 
 export const createUser = async ({email, password, name}: CreateUserParams) => {
     try{
@@ -269,6 +270,25 @@ export const getWatchlistName = async (watchlist_id: string): Promise<string | u
 
 export const createWatchlist = async (watchlistName: string) => {
     try{
+
+        const currentAccount = await account.get();
+
+        const response = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            [Query.equal("accountId", currentAccount.$id)]
+        );
+
+        if (response.total === 0) {
+            throw new Error("User document not found");
+        }
+
+        const userDoc = response.documents[0];
+
+        if (userDoc.created_watchlist_count >= maximumWatchlistCreations) {
+            throw new Error(`you have reached the maximum number of watchlist creations: ${maximumWatchlistCreations}`);
+        }
+
         const existingWatchlistMovies = await database.listDocuments(
             appwriteConfig.databaseId, 
             appwriteConfig.watchlistCollectionId, 
@@ -285,10 +305,18 @@ export const createWatchlist = async (watchlistName: string) => {
                 {name: watchlistName}
             );
 
-            const currentAccount = await account.get();
             if(!currentAccount) throw Error;
 
             addUserToWatchlist(newWatchlist.$id, currentAccount.$id, true);
+
+            await database.updateDocument(
+                appwriteConfig.databaseId,
+                appwriteConfig.userCollectionId,
+                userDoc.$id,
+                {
+                    created_watchlist_count: userDoc.created_watchlist_count + 1,
+                }
+            );
         }
 
     }   catch (error){
@@ -301,6 +329,18 @@ export const deleteWatchlist = async (watchlistId: string) => {
     try{
         const currentAccount = await account.get();
         if (!currentAccount) throw new Error("No user");
+
+        const response = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            [Query.equal("accountId", currentAccount.$id)]
+        );
+
+        if (response.total === 0) {
+            throw new Error("User document not found");
+        }
+
+        const userDoc = response.documents[0];
 
         const isAdmin = await adminCheck(watchlistId);
 
@@ -360,6 +400,15 @@ export const deleteWatchlist = async (watchlistId: string) => {
                 appwriteConfig.databaseId,
                 appwriteConfig.watchlistCollectionId,
                 watchlistId
+            );
+
+            await database.updateDocument(
+                appwriteConfig.databaseId,
+                appwriteConfig.userCollectionId,
+                userDoc.$id,
+                {
+                    created_watchlist_count: Math.max(0, userDoc.created_watchlist_count - 1),
+                }
             );
 
             console.log("watchlist deleted")
