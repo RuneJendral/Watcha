@@ -1,4 +1,5 @@
 import WatchlistMovieCard from '@/components/groupTabRelated/WatchlistMovieCard';
+import WatchlistMemberModal from '@/components/watchlistTabRelated/WatchlistMemberModal';
 import { icons } from '@/constants/icons';
 import { images } from '@/constants/images';
 import { getMoviesWatchlist, getWatchlistName, removeMovieFromWatchlist } from '@/services/appwrite';
@@ -14,6 +15,8 @@ const WatchlistCollection = () => {
   const [selectedMovies, setSelectedMovies] = useState<string[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [watchlistName, setWatchlistName] = useState<string | undefined>();
+  const [modalVisible, setModalVisible] = useState(false);
+
 
   const {
     data: watchlistMovies,
@@ -34,7 +37,6 @@ const WatchlistCollection = () => {
     } else {
       setSelectedMovies(prev => [...prev, movieId]);
     }
-
   };
 
   const handleLongPress = (movieId: string) => {
@@ -93,12 +95,23 @@ const WatchlistCollection = () => {
       <Image source={images.bg} className="absolute w-full y-0"/>
       
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
+
+        
+
+        {watchlistName && (
+          <WatchlistMemberModal
+            visible={modalVisible}
+            watchlistId={id as string}
+            onClose={() => setModalVisible(false)}
+          />
+          )}
+
         <View className="flex-row items-center justify-between pt-20 mb-3">
           <View className="flex-row items-center space-x-2">
             <Text className="text-lg text-white font-bold">{watchlistName ?? 'loading watchlist...'}</Text>
           </View>
 
-            <TouchableOpacity className="flex-row items-center mr-4" onPress={() => {/* open members modal */}}>
+            <TouchableOpacity className="flex-row items-center mr-4" onPress={() => {setModalVisible(true)}}>
               <Image source={icons.leftArrow} className="w-5 h-5 mr-2" resizeMode="contain" />
               <Image source={icons.groupHighlight} className="w-6 h-6" resizeMode="contain" />
             </TouchableOpacity>
@@ -140,6 +153,13 @@ const WatchlistCollection = () => {
           />
         )}
       </ScrollView>
+
+      {watchlistLoading && (
+        <View className="absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-primary z-50">
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
+
     </View>
   );
 };

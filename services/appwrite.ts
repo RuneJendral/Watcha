@@ -1,4 +1,4 @@
-import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, MovieDetails, SignInParams, TrendingMovie, Watchlist, WatchlistMovies } from '@/type';
+import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, MovieDetails, SignInParams, TrendingMovie, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
 import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -267,6 +267,54 @@ export const getWatchlistName = async (watchlist_id: string): Promise<string | u
         return undefined;
     }
 }
+
+export const getWatchlistMembers = async (
+    watchlist_id: string
+): Promise<WatchlistMember[] | undefined> => {
+    try {
+        const watchlistMembers = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.watchlistMemberCollectionId,
+            [Query.equal("watchlist_id", watchlist_id)]
+        );
+
+
+        const allUserIds = watchlistMembers.documents.flatMap(
+            (doc) => doc.user_ids ?? []
+        );
+
+        const detailedMembers: WatchlistMember[] = [];
+
+        for (const userId of allUserIds) {
+            try {
+                const userResult = await database.listDocuments(
+                    appwriteConfig.databaseId,
+                    appwriteConfig.userCollectionId,
+                    [Query.equal("accountId", userId)]
+                );
+
+                const userDoc = userResult.documents[0];
+                const userName = userDoc?.name ?? "unknown user";
+
+                detailedMembers.push({
+                    id: userId,
+                    name: userName,
+                });
+            } catch (err) {
+                console.warn("error while loading user", userId, err);
+                detailedMembers.push({
+                    id: userId,
+                    name: "unknown user",
+                });
+            }
+        }
+
+        return detailedMembers;
+    }catch (error) {
+        console.log("Fehler bei getWatchlistMembers:", error);
+        return undefined;
+    }
+};
 
 export const createWatchlist = async (watchlistName: string) => {
     try{

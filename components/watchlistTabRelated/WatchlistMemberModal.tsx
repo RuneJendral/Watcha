@@ -1,20 +1,23 @@
-import { getUserWatchlists } from '@/services/appwrite';
-import { CreateWatchlistProps, Watchlist } from '@/type';
+import { getWatchlistMembers } from '@/services/appwrite';
+import { ManageMembersProps, WatchlistMember } from '@/type';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import CustomInput from '../CustomInput';
 
-const WatchlistMemberModal : React.FC<CreateWatchlistProps & { refetchWatchlists: () => void }> = ({ visible, onClose, refetchWatchlists }) => { 
-   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
+const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchlistId, onClose })  => { 
+  const [watchlistMembers, setWatchlistMembers] = useState<WatchlistMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({email: ''});
+  const defaultAvatar = 'https://www.gravatar.com/avatar/?d=mp';
 
   useEffect(() => {
       const fetchWatchlists = async () => {
       try {
         setLoading(true);
-        const result = await getUserWatchlists(); 
-        setWatchlists(result ?? []);
+        const result = await getWatchlistMembers(watchlistId); 
+        setWatchlistMembers(result ?? []);
       } catch (error) {
-        console.error('could not load watchlist', error);
+        console.error('could not load watchlist members', error);
       } finally {
         setLoading(false);
       }
@@ -23,36 +26,47 @@ const WatchlistMemberModal : React.FC<CreateWatchlistProps & { refetchWatchlists
     if (visible) fetchWatchlists(); 
   }, [visible]);
 
-  const handleAddMovie = async (watchlistId: string) => {
+  const handleAddMember = async (watchlistId: string) => {
   try {
 
     onClose(); 
   } catch (e) {
-    console.error('Could not add movie to watchlist', e);
+    console.error('Could not add member to watchlist', e);
   }
 };
 
-  const renderItem = ({ item }: { item: Watchlist }) => (
-    <TouchableOpacity className="bg-light-200 rounded-lg my-2" onPress={() => handleAddMovie(item.id)}>
-        <View className="p-2">
-            <Text className="text-black font-bold">{item.name}</Text>
-        </View>
-    </TouchableOpacity>
+  const renderItem = ({ item }: { item: WatchlistMember }) => (
+    <TouchableOpacity className="bg-light-200 rounded-xl my-2 px-4 py-1.5 flex-row items-center">
+      <Image
+        source={{ uri: item.avatar || defaultAvatar }}
+        className="w-10 h-10 rounded-full mr-4"
+        resizeMode="cover"
+      />
+    <Text className="text-black font-semibold text-base">{item.name}</Text>
+  </TouchableOpacity>
   );
 
 
   return (
+    <KeyboardAvoidingView className="bg-primary" behavior={'padding'} keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
     <SafeAreaView className="flex-1 justify-center items-center bg-white">
       <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
         <View className="flex-1 justify-center items-center bg-black/20">
           <View className="bg-dark-100 rounded-2xl p-6 w-72 max-h-[40%] shadow-lg">
-            <Text className="text-start text-base text-white mb-4">Add to Watchlist</Text>
+            <CustomInput 
+                placeholder="User E-Mail" 
+                value={form.email} 
+                onChangeText={(text) => setForm((prev) => ({ ...prev, email: text}))} 
+                label="Add Member" 
+                keyboardType="email-address"
+            />
+            <Text className="text-start text-base text-white mb-4 mt-4">Watchlist Members</Text>
 
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <FlatList
-                    data={watchlists}
+                    data={watchlistMembers}
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     ItemSeparatorComponent={() => <View className="h-2" />}
@@ -68,6 +82,7 @@ const WatchlistMemberModal : React.FC<CreateWatchlistProps & { refetchWatchlists
         </View>
       </Modal>
     </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 

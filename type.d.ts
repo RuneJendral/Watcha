@@ -87,6 +87,12 @@ interface CreateWatchlistProps{
   onClose: () => void;
 }
 
+interface ManageMembersProps{
+  visible: boolean;
+  watchlistId: string;
+  onClose: () => void;
+}
+
 interface Movie {
   id: number;
   title: string;
@@ -201,6 +207,8 @@ interface Watchlist {
 
 interface WatchlistMember {
   id: string;
+  name: string;
+  avatar?: string;
   watchlistId?: string[];
   user_id?: string[];
 }
