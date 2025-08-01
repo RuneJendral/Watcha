@@ -470,6 +470,24 @@ export const deleteWatchlist = async (watchlistId: string) => {
     }
 }
 
+export const addUserToWatchlistWithMail = async (watchlistId: string, userMail: string, addAdmin: boolean) => {
+    try {
+        const requestedUser = await  database.listDocuments(appwriteConfig.databaseId, appwriteConfig.userCollectionId, [Query.equal("email", userMail)]);
+
+        const userDoc = requestedUser.documents[0];
+
+        if (!userDoc) {
+            throw new Error("User not found with given email");
+        }
+
+        addUserToWatchlist(watchlistId, userDoc?.accountId ?? "unknown user", addAdmin);
+
+    } catch (error){
+        console.log(error);
+        throw error;
+    }
+}
+
 export const addUserToWatchlist = async (watchlistId: string, userId: string, addAdmin: boolean) => {
     try {
         const currentWatchlist = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMemberCollectionId,[Query.equal('watchlist_id', watchlistId)]);
@@ -494,7 +512,7 @@ export const addUserToWatchlist = async (watchlistId: string, userId: string, ad
 
                 await database.updateDocument(
                 appwriteConfig.databaseId,
-                appwriteConfig.userCollectionId,
+                appwriteConfig.watchlistMemberCollectionId,
                 doc.$id,
                 {
                     user_ids: updatedUserList
