@@ -45,7 +45,7 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
   return (
     <SafeAreaView className="flex-1 justify-center items-center bg-white">
       <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
-        <View className="flex-1 justify-center items-center bg-black/20">
+        <View className="flex-1 justify-center items-center">
           <View className="bg-dark-100 rounded-2xl p-6 w-72 max-h-[40%] shadow-lg">
             <Text className="text-start text-base text-white mb-4">Add to Watchlist</Text>
 

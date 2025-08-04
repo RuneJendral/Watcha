@@ -1,4 +1,5 @@
 import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, MovieDetails, SignInParams, TrendingMovie, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
+import { Alert } from 'react-native';
 import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -477,7 +478,9 @@ export const addUserToWatchlistWithMail = async (watchlistId: string, userMail: 
         const userDoc = requestedUser.documents[0];
 
         if (!userDoc) {
-            throw new Error("User not found with given email");
+            console.log("User not found with given email");
+            Alert.alert("User not found with given email");
+            return;
         }
 
         addUserToWatchlist(watchlistId, userDoc?.accountId ?? "unknown user", addAdmin);
@@ -518,6 +521,7 @@ export const addUserToWatchlist = async (watchlistId: string, userId: string, ad
                     user_ids: updatedUserList
                 }
             );} else{
+                Alert.alert("User already exist in selected Watchlist");
                 console.log("User already exist in selected Watchlist");
             }
         }else {
@@ -530,7 +534,7 @@ export const addUserToWatchlist = async (watchlistId: string, userId: string, ad
         }
     } catch (error) {
         console.log(error);
-        throw error;
+        //throw error;
     }
 }
 

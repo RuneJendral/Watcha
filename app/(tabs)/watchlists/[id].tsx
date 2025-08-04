@@ -1,4 +1,5 @@
 import WatchlistMovieCard from '@/components/groupTabRelated/WatchlistMovieCard';
+import WatchlistAddMemberModal from '@/components/watchlistTabRelated/WatchlistAddMemberModal';
 import WatchlistMemberModal from '@/components/watchlistTabRelated/WatchlistMemberModal';
 import { icons } from '@/constants/icons';
 import { images } from '@/constants/images';
@@ -16,6 +17,7 @@ const WatchlistCollection = () => {
   const [selectionMode, setSelectionMode] = useState(false);
   const [watchlistName, setWatchlistName] = useState<string | undefined>();
   const [modalVisible, setModalVisible] = useState(false);
+  const [addMemberModalVisible, setAddMemberModalVisible] = useState(false);
 
 
   const {
@@ -60,6 +62,10 @@ const WatchlistCollection = () => {
       refetchWatchlistMovies();
     }, 600);
   }
+ 
+  const handleVotingSelected = async () => {
+
+  }
 
   useEffect(() => {
     const fetchWatchlistName = async () => {
@@ -96,31 +102,44 @@ const WatchlistCollection = () => {
       
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
 
-        
-
-        {watchlistName && (
-          <WatchlistMemberModal
+        <WatchlistMemberModal
             visible={modalVisible}
             watchlistId={id as string}
             onClose={() => setModalVisible(false)}
-          />
-          )}
+        />
+
+        <WatchlistAddMemberModal
+          visible={addMemberModalVisible}
+          watchlistId={id as string}
+          onClose={() => setAddMemberModalVisible(false)}
+        />
 
         <View className="flex-row items-center justify-between pt-20 mb-3">
           <View className="flex-row items-center space-x-2">
             <Text className="text-lg text-white font-bold">{watchlistName ?? 'loading watchlist...'}</Text>
           </View>
 
-            <TouchableOpacity className="flex-row items-center mr-4" onPress={() => {setModalVisible(true)}}>
-              <Image source={icons.leftArrow} className="w-5 h-5 mr-2" resizeMode="contain" />
-              <Image source={icons.groupHighlight} className="w-6 h-6" resizeMode="contain" />
+          <View className="flex-row items-center">
+
+             <TouchableOpacity className="mr-4" onPress={() => {setAddMemberModalVisible(true)}}>
+              <Image source={icons.add} className="w-7 h-7" resizeMode="contain" />
             </TouchableOpacity>
+
+            <TouchableOpacity className="mr-4" onPress={() => {setModalVisible(true)}}>
+              <Image source={icons.groupHighlight} className="w-7 h-7" resizeMode="contain" />
+            </TouchableOpacity>
+
+          </View>
         </View>
 
         {selectionMode && (
           <View className="my-1">
-            <TouchableOpacity className="bg-red-600 py-2 rounded-xl items-center"onPress={handleDeleteSelected}>
+            <TouchableOpacity className="bg-red-600 py-2 rounded-xl items-center mb-3"onPress={handleDeleteSelected}>
               <Text className="text-white font-bold">Delete {selectedMovies.length} Movies</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity className="bg-accent py-2 rounded-xl items-center mb-3"onPress={handleVotingSelected}>
+              <Text className="text-white font-bold">Start Voting with {selectedMovies.length} Movies</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={clearSelection} className="mt-2 items-center">
