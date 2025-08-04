@@ -34,7 +34,7 @@ const CreateWatchlistModal : React.FC<CreateWatchlistProps & { refetchWatchlists
 
   return (
          <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
-           <View className="h-full flex-1 justify-center items-center bg-black/30">
+           <View className="h-full flex-1 justify-center items-center">
              <View className="bg-dark-100 rounded-2xl p-6 w-72 shadow-lg gap-2">
                <Text className="text-start text-base text-white mb-4">Add to Watchlist</Text>
    

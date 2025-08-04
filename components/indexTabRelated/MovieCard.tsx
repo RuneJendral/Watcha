@@ -5,10 +5,17 @@ import React from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
 
 const CreateDate = (date: string) => {
-    const dates:string[] = ["", "Jan.", "Feb. ", "Mar. ", "Apr. ", "May ", "Jun. ", "Jul. ", "Aug. ", "Sep. ", "Oct. ", "Nov. ", "Dec. "];
-    const dateName:string = dates[parseInt(date.split('-')[1])] + date?.split('-')[0];
+  if (!date || !date.includes('-')) return 'Unknown';
 
-  return (dateName)
+  const parts = date.split('-');
+  const month = parseInt(parts[1]);
+  const year = parts[0];
+
+  const months = ["", "Jan.", "Feb.", "Mar.", "Apr.", "May", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."];
+
+  if (!months[month]) return year;
+
+  return `${months[month]} ${year}`;
 }
 
 const MovieCard = ({id, poster_path, title, vote_average, release_date}: Movie) => {

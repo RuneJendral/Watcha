@@ -1,5 +1,6 @@
 import add from "@/assets/icons/add.png";
 import arrow from "@/assets/icons/arrow.png";
+import dice from "@/assets/icons/dice.png";
 import edit from "@/assets/icons/edit.png";
 import group from "@/assets/icons/group.png";
 import groupHighlight from "@/assets/icons/groupHighlight.png";
@@ -40,4 +41,5 @@ export const icons = {
   leftArrow,
   user,
   add,
+  dice,
 };

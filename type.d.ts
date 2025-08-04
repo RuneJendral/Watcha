@@ -93,6 +93,13 @@ interface ManageMembersProps{
   onClose: () => void;
 }
 
+interface RandomMovieProps{
+  visible: boolean;
+  watchlistId: string;
+  onClose: () => void;
+  movies: WatchlistMovies[];
+}
+
 interface Movie {
   id: number;
   title: string;

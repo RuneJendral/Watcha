@@ -1,10 +1,12 @@
 import WatchlistMovieCard from '@/components/groupTabRelated/WatchlistMovieCard';
 import WatchlistAddMemberModal from '@/components/watchlistTabRelated/WatchlistAddMemberModal';
 import WatchlistMemberModal from '@/components/watchlistTabRelated/WatchlistMemberModal';
+import WatchlistRandomMovieModal from '@/components/watchlistTabRelated/WatchlistRandomMovieModal';
 import { icons } from '@/constants/icons';
 import { images } from '@/constants/images';
 import { getMoviesWatchlist, getWatchlistName, removeMovieFromWatchlist } from '@/services/appwrite';
 import useFetch from '@/services/useFetch';
+import { WatchlistMovies } from '@/type';
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -18,6 +20,7 @@ const WatchlistCollection = () => {
   const [watchlistName, setWatchlistName] = useState<string | undefined>();
   const [modalVisible, setModalVisible] = useState(false);
   const [addMemberModalVisible, setAddMemberModalVisible] = useState(false);
+  const [randomMovieModalVisible, setRandomMovieModalVisible] = useState(false);
 
 
   const {
@@ -114,6 +117,13 @@ const WatchlistCollection = () => {
           onClose={() => setAddMemberModalVisible(false)}
         />
 
+        <WatchlistRandomMovieModal
+          visible={randomMovieModalVisible}
+          watchlistId={id as string}
+          onClose={() => setRandomMovieModalVisible(false)}
+          movies={watchlistMovies as WatchlistMovies[]}
+        />
+
         <View className="flex-row items-center justify-between pt-20 mb-3">
           <View className="flex-row items-center space-x-2">
             <Text className="text-lg text-white font-bold">{watchlistName ?? 'loading watchlist...'}</Text>
@@ -121,7 +131,11 @@ const WatchlistCollection = () => {
 
           <View className="flex-row items-center">
 
-             <TouchableOpacity className="mr-4" onPress={() => {setAddMemberModalVisible(true)}}>
+            <TouchableOpacity className="mr-5" onPress={() => {setRandomMovieModalVisible(true)}}>
+              <Image source={icons.dice} className="w-7 h-7" resizeMode="contain" />
+            </TouchableOpacity>
+
+             <TouchableOpacity className="mr-5" onPress={() => {setAddMemberModalVisible(true)}}>
               <Image source={icons.add} className="w-7 h-7" resizeMode="contain" />
             </TouchableOpacity>
 
