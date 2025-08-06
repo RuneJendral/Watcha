@@ -226,6 +226,8 @@ interface WatchlistMovies {
   movie_id: string;
   title: string;
   poster_url: string;
+  vote_average?: number;
+  release_date?: string;
   createdAt: string;
   selected: boolean;
   onPress?: () => void;

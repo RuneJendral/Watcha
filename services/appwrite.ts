@@ -605,7 +605,9 @@ export const addMovieToWatchlist = async (watchlistId: string, movieId: string, 
                     watchlist_ids: [watchlistId],
                     title: movie.title,
                     poster_url: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    vote_average: movie.vote_average,
+                    release_date: movie.release_date
                 }
             );
         }
