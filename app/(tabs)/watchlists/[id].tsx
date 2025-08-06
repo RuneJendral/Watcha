@@ -131,6 +131,10 @@ const WatchlistCollection = () => {
 
           <View className="flex-row items-center">
 
+            <TouchableOpacity className="mr-5" onPress={() => {}}>
+              <Image source={icons.voting} className="w-7 h-7" resizeMode="contain" />
+            </TouchableOpacity>
+
             <TouchableOpacity className="mr-5" onPress={() => {setRandomMovieModalVisible(true)}}>
               <Image source={icons.dice} className="w-7 h-7" resizeMode="contain" />
             </TouchableOpacity>

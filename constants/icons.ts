@@ -19,6 +19,7 @@ import search from "@/assets/icons/search.png";
 import searchHighlight from "@/assets/icons/searchHighlight.png";
 import star from "@/assets/icons/star.png";
 import user from "@/assets/icons/user.png";
+import voting from "@/assets/icons/voting.png";
 
 export const icons = {
   home,
@@ -42,4 +43,5 @@ export const icons = {
   user,
   add,
   dice,
+  voting,
 };
