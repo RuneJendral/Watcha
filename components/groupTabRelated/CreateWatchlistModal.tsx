@@ -39,7 +39,7 @@ const CreateWatchlistModal : React.FC<CreateWatchlistProps & { refetchWatchlists
 
   return (
 
-    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent statusBarTranslucent presentationStyle="overFullScreen" >
+    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent statusBarTranslucent={true} navigationBarTranslucent={true} presentationStyle="overFullScreen">
         
         <DialogModal
             text={confirmText}

@@ -102,7 +102,7 @@ const WatchlistCollection = () => {
   return (
     <View className="flex-1 bg-primary">
       <Image source={images.bg} className="absolute w-full y-0"/>
-
+      
       <View className="px-5 pt-20 mb-3">
         <View className="flex-row items-center justify-between">
           <Text className="text-lg text-white font-bold">{watchlistName ?? 'loading watchlist...'}</Text>

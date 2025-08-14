@@ -36,7 +36,7 @@ const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchli
   );
 
   return (
-    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent>
+    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent statusBarTranslucent={true} navigationBarTranslucent={true}>
       <Pressable className="flex-1 justify-center items-center bg-black/40" onPress={onClose}>
         <Pressable className="bg-dark-100 rounded-2xl p-6 w-72 max-h-[60%] shadow-lg" onPress={(e) => e.stopPropagation()}>
           <Text className="text-start text-base font-bold text-white mb-4 mt-4">Watchlist Members:</Text>

@@ -6,7 +6,6 @@ import { MovieInfoProps } from '@/type';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const MovieInfo = ({label, value }: MovieInfoProps) => (
   <View className="flex-col items-start justify-center mt-5">
@@ -43,7 +42,7 @@ const movieDetails = () => {
   const [modalVisible, setModalVisible] = useState(false);
   
   return (
-    <SafeAreaView className="bg-primary flex-1 pb-4">
+    <View  className="bg-primary flex-1 pb-4">
       <ScrollView contentContainerStyle={{paddingBottom: 80}}>
         
         {movie && (
@@ -99,7 +98,7 @@ const movieDetails = () => {
 
           </View> 
       </ScrollView>
-    </SafeAreaView>
+    </View >
   )
 }
 

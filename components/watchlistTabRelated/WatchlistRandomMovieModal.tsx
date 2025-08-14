@@ -55,7 +55,7 @@ const WatchlistRandomMovieModal = ({visible, onClose, movies,}: RandomMovieProps
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent={true} navigationBarTranslucent={true}>
 
       <DialogModal
         text={confirmText}
