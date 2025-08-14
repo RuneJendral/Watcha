@@ -42,7 +42,7 @@ const movieDetails = () => {
   const [modalVisible, setModalVisible] = useState(false);
   
   return (
-    <View  className="bg-primary flex-1 pb-4">
+    <View  className="bg-primary flex-1 pb-10">
       <ScrollView contentContainerStyle={{paddingBottom: 80}}>
         
         {movie && (

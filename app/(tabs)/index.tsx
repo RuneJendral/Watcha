@@ -11,6 +11,7 @@ export default function Index() {
   const {data: trendingMovies, loading: trendingLoading, error: trendingError} = useFetch(getTrendingMovies, true, []);
 
   const{data: movies, loading: moviesLoading, error: moviesError} = useFetch(() => fetchMovies({query: ''}), true, [])
+  const trimmedMovies = movies?.slice(0, movies.length - (movies.length % 3));
 
   return (
     <View className="flex-1 bg-primary">
@@ -54,7 +55,7 @@ export default function Index() {
               <Text className="text-lg text-white font-bold mt-5 mb-3">Popular Movies</Text>
 
               <FlatList 
-                data={Array.isArray(movies) ? movies : []}
+                data={Array.isArray(trimmedMovies) ? trimmedMovies : []}
                 renderItem={({ item }) => (
                   <MovieCard 
                     {... item}
