@@ -102,13 +102,66 @@ const WatchlistCollection = () => {
   return (
     <View className="flex-1 bg-primary">
       <Image source={images.bg} className="absolute w-full y-0"/>
+
+      <View className="px-5 pt-20 mb-3">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-lg text-white font-bold">{watchlistName ?? 'loading watchlist...'}</Text>
+          <View className="flex-row items-center">
+            <TouchableOpacity className="mr-5" onPress={() => {}}>
+              <Image source={icons.voting} className="w-7 h-7" resizeMode="contain" />
+            </TouchableOpacity>
+            <TouchableOpacity className="mr-5" onPress={() => setRandomMovieModalVisible(true)}>
+              <Image source={icons.dice} className="w-7 h-7" resizeMode="contain" />
+            </TouchableOpacity>
+            <TouchableOpacity className="mr-5" onPress={() => setAddMemberModalVisible(true)}>
+              <Image source={icons.add} className="w-7 h-7" resizeMode="contain" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setModalVisible(true)}>
+              <Image source={icons.groupHighlight} className="w-7 h-7" resizeMode="contain" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {selectionMode && (
+          <View className="my-2">
+            <TouchableOpacity className="bg-red-600 py-2 rounded-xl items-center mb-3" onPress={handleDeleteSelected}>
+              <Text className="text-white font-bold">Delete {selectedMovies.length} Movies</Text>
+            </TouchableOpacity>
+            <TouchableOpacity className="bg-accent py-2 rounded-xl items-center mb-3" onPress={handleVotingSelected}>
+              <Text className="text-white font-bold">Start Voting with {selectedMovies.length} Movies</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={clearSelection} className="items-center">
+              <Text className="text-white underline">Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
       
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
+        {watchlistLoading ? (
+            <ActivityIndicator size="large" color="#0000ff" className="mt-10 self-center"/>
+        ) : watchlistError ? (
+          <Text>Error: {watchlistError?.message}</Text>
+        ) : (
+          <FlatList
+            scrollEnabled={false}
+            data={watchlistMovies}
+            numColumns={3}
+            keyExtractor={(item) => item.$id}
+            renderItem={renderMovie}
+            contentContainerStyle={{ paddingBottom: 20, paddingTop: 10, gap: 16 }}
+            columnWrapperStyle={{justifyContent: 'flex-start', gap: 15, paddingRight: 5, marginBottom: 10,  marginLeft: 2,}}
+            className="pb-32 "
+            ListHeaderComponent={
+              <Text className="text-lg text-white font-bold mb-3 mt-10">Watchlist:</Text>
+            }
+          />
+        )}
 
         <WatchlistMemberModal
-            visible={modalVisible}
-            watchlistId={id as string}
-            onClose={() => setModalVisible(false)}
+          visible={modalVisible}
+          watchlistId={id as string}
+          onClose={() => setModalVisible(false)}
         />
 
         <WatchlistAddMemberModal
@@ -124,71 +177,6 @@ const WatchlistCollection = () => {
           movies={watchlistMovies as WatchlistMovies[]}
         />
 
-        <View className="flex-row items-center justify-between pt-20 mb-3">
-          <View className="flex-row items-center space-x-2">
-            <Text className="text-lg text-white font-bold">{watchlistName ?? 'loading watchlist...'}</Text>
-          </View>
-
-          <View className="flex-row items-center">
-
-            <TouchableOpacity className="mr-5" onPress={() => {}}>
-              <Image source={icons.voting} className="w-7 h-7" resizeMode="contain" />
-            </TouchableOpacity>
-
-            <TouchableOpacity className="mr-5" onPress={() => {setRandomMovieModalVisible(true)}}>
-              <Image source={icons.dice} className="w-7 h-7" resizeMode="contain" />
-            </TouchableOpacity>
-
-             <TouchableOpacity className="mr-5" onPress={() => {setAddMemberModalVisible(true)}}>
-              <Image source={icons.add} className="w-7 h-7" resizeMode="contain" />
-            </TouchableOpacity>
-
-            <TouchableOpacity className="mr-4" onPress={() => {setModalVisible(true)}}>
-              <Image source={icons.groupHighlight} className="w-7 h-7" resizeMode="contain" />
-            </TouchableOpacity>
-
-          </View>
-        </View>
-
-        {selectionMode && (
-          <View className="my-1">
-            <TouchableOpacity className="bg-red-600 py-2 rounded-xl items-center mb-3"onPress={handleDeleteSelected}>
-              <Text className="text-white font-bold">Delete {selectedMovies.length} Movies</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity className="bg-accent py-2 rounded-xl items-center mb-3"onPress={handleVotingSelected}>
-              <Text className="text-white font-bold">Start Voting with {selectedMovies.length} Movies</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={clearSelection} className="mt-2 items-center">
-              <Text className="text-white underline">Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      
-        {watchlistLoading ? (
-            <ActivityIndicator
-                      size="large"
-                      color="#0000ff"
-                      className="mt-10 self-center"
-                    />
-        ) : watchlistError ? (
-          <Text>Error: {watchlistError?.message}</Text>
-        ) : (
-          <FlatList
-            scrollEnabled={false}
-            data={watchlistMovies}
-            numColumns={3}
-            keyExtractor={(item) => item.$id}
-            renderItem={renderMovie}
-            contentContainerStyle={{ paddingBottom: 20, paddingTop: 10, gap: 16 }}
-            columnWrapperStyle={{justifyContent: 'flex-start', gap: 15, paddingRight: 5, marginBottom: 10,  marginLeft: 2,}}
-            className="pb-32 "
-              ListHeaderComponent={
-              <Text className="text-lg text-white font-bold mb-3 mt-10">Watchlist:</Text>
-            }
-          />
-        )}
       </ScrollView>
 
       {watchlistLoading && (

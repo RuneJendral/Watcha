@@ -100,6 +100,15 @@ interface RandomMovieProps{
   movies: WatchlistMovies[];
 }
 
+type DialogModalProps = {
+  text: string;
+  visible: boolean;
+  onClose: () => void;
+}
+
+export type CreateWatchlistResult = | { ok: true; message: string; watchlistId: string; name: string } | { ok: false; code: string; message: string; field?: string };
+
+
 interface Movie {
   id: number;
   title: string;

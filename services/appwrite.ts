@@ -1,5 +1,4 @@
-import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, Movie, MovieDetails, SignInParams, TrendingMovie, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
-import { Alert } from 'react-native';
+import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, CreateWatchlistResult, Movie, MovieDetails, SignInParams, TrendingMovie, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
 import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -269,9 +268,7 @@ export const getWatchlistName = async (watchlist_id: string): Promise<string | u
     }
 }
 
-export const getWatchlistMembers = async (
-    watchlist_id: string
-): Promise<WatchlistMember[] | undefined> => {
+export const getWatchlistMembers = async (watchlist_id: string): Promise<WatchlistMember[] | undefined> => {
     try {
         const watchlistMembers = await database.listDocuments(
             appwriteConfig.databaseId,
@@ -317,25 +314,36 @@ export const getWatchlistMembers = async (
     }
 };
 
-export const createWatchlist = async (watchlistName: string) => {
+const toResultError = (err: unknown, fallback = "Something went wrong"): CreateWatchlistResult => {
+    if (typeof err === "object" && err !== null) {
+        const anyErr = err as any;
+        const msg = (anyErr?.message as string) || fallback;
+        const code = (anyErr?.code as string) || (anyErr?.type as string) || "UNKNOWN";
+        return { ok: false, code, message: msg };
+    }
+    return { ok: false, code: "UNKNOWN", message: fallback };
+};
+
+export const createWatchlist = async (watchlistName: string): Promise <CreateWatchlistResult> => {
     try{
 
         const currentAccount = await account.get();
 
-        const response = await database.listDocuments(
+        const users = await database.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.userCollectionId,
             [Query.equal("accountId", currentAccount.$id)]
         );
 
-        if (response.total === 0) {
-            throw new Error("User document not found");
+        if (users.total === 0) {
+            return { ok: false, code: "USER_NOT_FOUND", message: "User document not found." };
         }
 
-        const userDoc = response.documents[0];
+        const userDoc = users.documents[0];
+        const currentWatchlistCount = Number(userDoc.created_watchlist_count ?? 0);
 
-        if (userDoc.created_watchlist_count >= maximumWatchlistCreations) {
-            throw new Error(`you have reached the maximum number of watchlist creations: ${maximumWatchlistCreations}`);
+        if (currentWatchlistCount >= maximumWatchlistCreations) {
+            return { ok: false, code: "LIMIT_REACHED", message: `You’ve reached the limit of ${maximumWatchlistCreations} watchlists.` };
         }
 
         const existingWatchlistMovies = await database.listDocuments(
@@ -345,32 +353,32 @@ export const createWatchlist = async (watchlistName: string) => {
         );
 
         if(existingWatchlistMovies.total > 0){
-            throw new Error(`watchlist with the name ${watchlistName} already exist`);
-        } else {
-            const newWatchlist = await database.createDocument(
-                appwriteConfig.databaseId, 
-                appwriteConfig.watchlistCollectionId, 
-                ID.unique(), 
-                {name: watchlistName}
-            );
+            return { ok: false, code: "DUPLICATE", message: `A watchlist named “${watchlistName}” already exists.`, field: "watchlistName" };
+        } 
+        
+        
+        const newWatchlist = await database.createDocument(
+            appwriteConfig.databaseId, 
+            appwriteConfig.watchlistCollectionId, 
+            ID.unique(), 
+            {name: watchlistName}
+        );
 
-            if(!currentAccount) throw Error;
+        await addUserToWatchlist(newWatchlist.$id, currentAccount.$id, true);
 
-            addUserToWatchlist(newWatchlist.$id, currentAccount.$id, true);
+        await database.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            userDoc.$id,
+            {
+                created_watchlist_count: userDoc.created_watchlist_count + 1,
+            }
+        );
 
-            await database.updateDocument(
-                appwriteConfig.databaseId,
-                appwriteConfig.userCollectionId,
-                userDoc.$id,
-                {
-                    created_watchlist_count: userDoc.created_watchlist_count + 1,
-                }
-            );
-        }
+        return { ok: true, message: `Created “${watchlistName}”`, watchlistId: newWatchlist.$id, name: watchlistName};
 
-    }   catch (error){
-        console.log(error);
-        throw error;
+    } catch (error){
+        return toResultError(error, "Could not create watchlist.");
     }
 }
 
@@ -471,19 +479,18 @@ export const deleteWatchlist = async (watchlistId: string) => {
     }
 }
 
-export const addUserToWatchlistWithMail = async (watchlistId: string, userMail: string, addAdmin: boolean) => {
+export const addUserToWatchlistWithMail = async (watchlistId: string, userMail: string, addAdmin: boolean): Promise<boolean | undefined> => {
     try {
-        const requestedUser = await  database.listDocuments(appwriteConfig.databaseId, appwriteConfig.userCollectionId, [Query.equal("email", userMail)]);
+        const requestedUser = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.userCollectionId, [Query.equal("email", userMail)]);
 
         const userDoc = requestedUser.documents[0];
 
         if (!userDoc) {
             console.log("User not found with given email");
-            Alert.alert("User not found with given email");
-            return;
+            return false;
         }
 
-        addUserToWatchlist(watchlistId, userDoc?.accountId ?? "unknown user", addAdmin);
+        return addUserToWatchlist(watchlistId, userDoc?.accountId ?? "unknown user", addAdmin);;
 
     } catch (error){
         console.log(error);
@@ -491,7 +498,7 @@ export const addUserToWatchlistWithMail = async (watchlistId: string, userMail: 
     }
 }
 
-export const addUserToWatchlist = async (watchlistId: string, userId: string, addAdmin: boolean) => {
+export const addUserToWatchlist = async (watchlistId: string, userId: string, addAdmin: boolean): Promise<boolean | undefined>  => {
     try {
         const currentWatchlist = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMemberCollectionId,[Query.equal('watchlist_id', watchlistId)]);
         const payload: any = {
@@ -514,15 +521,16 @@ export const addUserToWatchlist = async (watchlistId: string, userId: string, ad
                 const updatedUserList = [...existingUsers, userId];
 
                 await database.updateDocument(
-                appwriteConfig.databaseId,
-                appwriteConfig.watchlistMemberCollectionId,
-                doc.$id,
-                {
-                    user_ids: updatedUserList
-                }
-            );} else{
-                Alert.alert("User already exist in selected Watchlist");
+                    appwriteConfig.databaseId,
+                    appwriteConfig.watchlistMemberCollectionId,
+                    doc.$id,
+                    {
+                        user_ids: updatedUserList
+                    }
+                );
+            } else{              
                 console.log("User already exist in selected Watchlist");
+                return false;
             }
         }else {
             await database.createDocument(
@@ -531,10 +539,12 @@ export const addUserToWatchlist = async (watchlistId: string, userId: string, ad
                 ID.unique(), 
                 payload
             );
+
+            return true;
         }
     } catch (error) {
         console.log(error);
-        //throw error;
+        throw error;
     }
 }
 
@@ -572,7 +582,7 @@ export const removeUserFromWatchlist = async (watchlistId: string, userId: strin
     }
 }
 
-export const addMovieToWatchlist = async (watchlistId: string, movieId: string, movie: MovieDetails) =>{
+export const addMovieToWatchlist = async (watchlistId: string, movieId: string, movie: MovieDetails): Promise<boolean | undefined>  =>{
     try {
         const existing = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMovieCollectionId,[Query.equal('movie_id', movieId)]);
 
@@ -593,8 +603,14 @@ export const addMovieToWatchlist = async (watchlistId: string, movieId: string, 
                 {
                     watchlist_ids: updatedWatchlists
                 }
-            );} else{
+
+            );
+
+            return true;
+        
+        } else{
                 console.log("Movie already exist in selected Watchlist");
+                return false;
             }
         }else {
             await database.createDocument(
@@ -610,6 +626,8 @@ export const addMovieToWatchlist = async (watchlistId: string, movieId: string, 
                     release_date: movie.release_date
                 }
             );
+
+            return true;
         }
     } catch (error) {
         console.log(error);

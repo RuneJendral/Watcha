@@ -1,7 +1,7 @@
 import { getWatchlistMembers } from '@/services/appwrite';
 import { ManageMembersProps, WatchlistMember } from '@/type';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Modal, Pressable, Text, TouchableOpacity } from 'react-native';
 
 const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchlistId, onClose })  => { 
   const [watchlistMembers, setWatchlistMembers] = useState<WatchlistMember[]>([]);
@@ -35,36 +35,26 @@ const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchli
   </TouchableOpacity>
   );
 
-
   return (
-    <KeyboardAvoidingView className="bg-primary" behavior={'padding'} keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
-      <SafeAreaView className="flex-1 justify-center items-center bg-white">
-        <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
-          <View className="flex-1 justify-center items-center ">
-            <View className="bg-dark-100 rounded-2xl p-6 w-72 max-h-[60%] shadow-lg">
+    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent>
+      <Pressable className="flex-1 justify-center items-center bg-black/40" onPress={onClose}>
+        <Pressable className="bg-dark-100 rounded-2xl p-6 w-72 max-h-[60%] shadow-lg" onPress={(e) => e.stopPropagation()}>
+          <Text className="text-start text-base font-bold text-white mb-4 mt-4">Watchlist Members:</Text>
 
-              <Text className="text-start text-base font-bold text-white mb-4 mt-4">Watchlist Members:</Text>
-
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <FlatList
-                      data={watchlistMembers}
-                      keyExtractor={(item) => item.id}
-                      renderItem={renderItem}
-                      scrollEnabled={true}
-                      contentContainerStyle={{ paddingBottom: 10 }}
-                    />
-                  )}
-
-              <TouchableOpacity onPress={onClose} className="mt-4 bg-accent rounded-lg p-2">
-                <Text className="text-white text-center font-semibold">Close</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      </SafeAreaView>
-    </KeyboardAvoidingView>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <FlatList
+                  data={watchlistMembers}
+                  keyExtractor={(item) => item.id}
+                  renderItem={renderItem}
+                  scrollEnabled={true}
+                  contentContainerStyle={{ paddingBottom: 10 }}
+                />
+              )}
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 };
 

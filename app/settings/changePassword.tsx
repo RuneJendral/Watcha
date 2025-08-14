@@ -1,26 +1,31 @@
+import DialogModal from '@/components/basicModals/DialogModal';
 import CustomButton from '@/components/CustomButton';
 import CustomInput from '@/components/CustomInput';
 import { changePassword, logOut } from '@/services/appwrite';
 import useAuthStore from '@/store/auth.store';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 const changePasswordSetting = () => {
- // eslint-disable-next-line react-hooks/rules-of-hooks
     const [isSubmitting, setIsSubmitting] = useState(false);
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [form, setForm] = useState({oldPassword: '',  newPassword: '', repeatPassword: ''});
+    const [dialogModalVisible, setDialogModalVisible] = useState(false);
+    const [confirmText, setConfirmText] = useState("");
 
     const submit = async () => {
         const {oldPassword, newPassword, repeatPassword} = form;
 
         if(!oldPassword || !newPassword || !repeatPassword){
-            return Alert.alert('Error', 'Please enter a valid password');
+            setConfirmText("Please enter a valid password");
+            setDialogModalVisible(true);
+            return;
         }
 
         if(newPassword !== repeatPassword){
-            return Alert.alert('Error', 'Please repeat the same new Password');
+            setConfirmText("Please repeat the same new Password");
+            setDialogModalVisible(true);
+            return;
         }
 
         setIsSubmitting(true)
@@ -32,7 +37,8 @@ const changePasswordSetting = () => {
             useAuthStore.getState().setUser(null); 
             router.replace('/sign-in');
         } catch(error: any){
-            Alert.alert('Error', error.message);
+            setConfirmText(error.message);
+            setDialogModalVisible(true);
         } finally {
             setIsSubmitting(false);
         }
@@ -40,6 +46,12 @@ const changePasswordSetting = () => {
 
     return (
          <View className="gap-10 p-5 mt-5">
+
+            <DialogModal
+                text={confirmText}
+                visible={dialogModalVisible}
+                onClose={() => setDialogModalVisible(false)}
+            />
 
             <View className="flex flex-coloumn items-start justify-between">
                 <Text className="font-bold text-white">Change Password</Text>
@@ -73,6 +85,7 @@ const changePasswordSetting = () => {
                 title="Change Password"
                 isLoading={isSubmitting}
                 onPress={submit}
+                style={"py-4 px-4"}               
             />
         </View>
     )

@@ -1,11 +1,14 @@
-import { addMovieToWatchlist, getUserWatchlists } from '@/services/appwrite';
+import { addMovieToWatchlist, getUserWatchlists, getWatchlistName } from '@/services/appwrite';
 import { AddToWatchlistProps, Watchlist } from '@/type';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Modal, Pressable, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import DialogModal from '../basicModals/DialogModal';
 
 const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, onSelectWatchlist, movie }) => {
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogModalVisible, setDialogModalVisible] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
 
   useEffect(() => {
       const fetchWatchlists = async () => {
@@ -25,28 +28,39 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
 
   const handleAddMovie = async (watchlistId: string) => {
   try {
-    await addMovieToWatchlist(watchlistId, movie.id.toString(), movie);
+    const canAdd = await addMovieToWatchlist(watchlistId, movie.id.toString(), movie);
+    const watchlistName = await getWatchlistName(watchlistId);
+
+    setConfirmText(canAdd ? `Added ${movie.title} to ${watchlistName}` : `${movie.title} is already in ${watchlistName}`);
+    setDialogModalVisible(true);
     onSelectWatchlist(watchlistId);
     onClose(); 
+
   } catch (e) {
     console.error('Could not add movie to watchlist', e);
+    setConfirmText(`could not add ${movie.title} to watchlist`);
+    setDialogModalVisible(true);
   }
 };
 
   const renderItem = ({ item }: { item: Watchlist }) => (
-    <TouchableOpacity className="bg-light-200 rounded-lg my-2" onPress={() => handleAddMovie(item.id)}>
-     <View className="p-2">
-        <Text className="text-black font-bold">{item.name}</Text>
-      </View>
+    <TouchableOpacity className="bg-light-200 rounded-lg px-3 py-3 my-1" onPress={() => handleAddMovie(item.id)}>
+      <Text className="text-black font-semibold">{item.name}</Text>
     </TouchableOpacity>
   );
 
-
   return (
-    <SafeAreaView className="flex-1 justify-center items-center bg-white">
-      <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
-        <View className="flex-1 justify-center items-center">
-          <View className="bg-dark-100 rounded-2xl p-6 w-72 max-h-[40%] shadow-lg">
+    <SafeAreaView className="flex-1 justify-center items-center">
+
+      <DialogModal
+        text={confirmText}
+        visible={dialogModalVisible}
+        onClose={() => setDialogModalVisible(false)}
+      />
+
+      <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent>
+        <Pressable className="flex-1 bg-black/40 justify-center items-center" onPress={onClose}>
+          <Pressable className="bg-dark-100 rounded-2xl p-6 w-72 max-h-[45%] shadow-lg" onPress={(e) => e.stopPropagation()}>
             <Text className="text-start text-base text-white mb-4">Add to Watchlist</Text>
 
                 {loading ? (
@@ -57,16 +71,14 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
                     keyExtractor={(item) => item.id}
                     renderItem={renderItem}
                     ItemSeparatorComponent={() => <View className="h-2" />}
-                    scrollEnabled={true}
-                    contentContainerStyle={{ paddingBottom: 10 }}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 8 }}
+                    removeClippedSubviews
                   />
                 )}
-
-            <TouchableOpacity onPress={onClose} className="mt-4 bg-accent rounded-lg p-2">
-              <Text className="text-white text-center font-semibold">Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </SafeAreaView>
   );

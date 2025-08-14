@@ -1,7 +1,8 @@
 import { RandomMovieProps, WatchlistMovies } from '@/type';
 import React, { useState } from 'react';
-import { Alert, Image, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import CustomInput from '../CustomInput';
+import DialogModal from '../basicModals/DialogModal';
 
 function getWeightedRandom<T>(items: T[]): T {
   const weights = items.map((_, index) => items.length - index); 
@@ -21,15 +22,17 @@ function getWeightedRandom<T>(items: T[]): T {
 }
 
 const WatchlistRandomMovieModal = ({visible, onClose, movies,}: RandomMovieProps) => {
-  
   const [minRating, setMinRating] = useState<string>('');
   const [maxYear, setMaxYear] = useState<string>('');
   const [randomMovie, setRandomMovie] = useState<WatchlistMovies | null>(null);
   const [prioritizeOld, setPrioritizeOld] = useState(false);
+  const [dialogModalVisible, setDialogModalVisible] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
 
   const getRandomFilteredMovie = () => {
     if (!movies || movies.length === 0) {
-      Alert.alert('no movies available');
+      setConfirmText("no movies available");
+      setDialogModalVisible(true);
       return;
     }
 
@@ -41,23 +44,29 @@ const WatchlistRandomMovieModal = ({visible, onClose, movies,}: RandomMovieProps
     });
 
     if (filtered.length === 0) {
-      Alert.alert("There are no movies with this filter");
+      setConfirmText("There are no movies with this filter");
+      setDialogModalVisible(true);
       return;
     }
 
-  const selected = prioritizeOld ? getWeightedRandom(filtered): filtered[Math.floor(Math.random() * filtered.length)];
+    const selected = prioritizeOld ? getWeightedRandom(filtered): filtered[Math.floor(Math.random() * filtered.length)];
 
     setRandomMovie(selected);
   };
 
-
-
   return (
-<Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-center items-center px-4">
-        <View className="bg-dark-100 rounded-2xl p-6 w-full max-w-[360px]">
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+
+      <DialogModal
+        text={confirmText}
+        visible={dialogModalVisible}
+        onClose={() => setDialogModalVisible(false)}
+      />
+
+      <Pressable className="flex-1 justify-center items-center bg-black/40" onPress={() => {setRandomMovie(null); onClose()}}>
+        <Pressable className="bg-dark-100 rounded-2xl p-6 w-full max-w-[80%] shadow-lg" onPress={(e) => e.stopPropagation()}>
           <Text className="label text-white font-bold mb-2">Random Movie</Text>
-          <ScrollView contentContainerStyle={{ paddingBottom: 10 }} showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false}>
             
             <CustomInput 
               placeholder="e.g. 7.5"
@@ -83,7 +92,7 @@ const WatchlistRandomMovieModal = ({visible, onClose, movies,}: RandomMovieProps
             </TouchableOpacity>
 
             {randomMovie && (
-              <View className="items-center bg-light-100 p-4 rounded-xl">
+              <View className="items-center bg-light-200 p-4 rounded-xl">
                 <Text className="text-black font-bold text-lg mb-2">{randomMovie.title}</Text>
                 <Image
                   source={{ uri: randomMovie.poster_url }}
@@ -99,12 +108,8 @@ const WatchlistRandomMovieModal = ({visible, onClose, movies,}: RandomMovieProps
               </View>
             )}
           </ScrollView>
-
-          <TouchableOpacity onPress={onClose} className="mt-5 bg-accent rounded-lg p-2">
-            <Text className="text-white text-center font-semibold">Close</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 };
