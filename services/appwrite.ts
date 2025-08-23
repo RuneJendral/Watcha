@@ -1,4 +1,4 @@
-import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserParams, CreateWatchlistResult, Movie, MovieDetails, SignInParams, TrendingMovie, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
+import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserFakeMailParams, CreateUserParams, CreateWatchlistResult, Movie, MovieDetails, SignInFakeMailParams, SignInParams, TrendingMovie, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
 import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -18,6 +18,22 @@ export const account = new Account(client);
 export const database = new Databases(client);
 const avatars = new Avatars(client);
 const maximumWatchlistCreations  = 3;
+
+export function slugifyUsername(raw: string) {
+    return raw
+        .normalize("NFKD")               
+        .replace(/[\u0300-\u036f]/g, "") 
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9._-]+/g, "-") 
+        .replace(/^-+|-+$/g, "")         
+        .slice(0, 32);                   
+}
+
+export function createFakeEmail(usernameSlug: string, suffix?: string) {
+    const tag = suffix ?? Math.random().toString(36).slice(2, 8); 
+    return `${usernameSlug}+${tag}@example.com`; 
+}
 
 export const createUser = async ({email, password, name}: CreateUserParams) => {
     try{
@@ -40,9 +56,67 @@ export const createUser = async ({email, password, name}: CreateUserParams) => {
     }
 }
 
+export const createUserWithFakeMail = async ({password, name}: CreateUserFakeMailParams) => {
+    try{
+        const usernameSlug = slugifyUsername(name);
+        if (!usernameSlug) throw Error;
+
+        const existing = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            [Query.equal("name", usernameSlug)]
+        );
+        if (existing.total > 0) {
+            throw Error;
+        }
+
+        const fakeEmail = createFakeEmail(usernameSlug);
+
+        const newAccount = await account.create(ID.unique(), fakeEmail, password, name);
+        if(!newAccount) throw Error;
+
+        await signIn({email:fakeEmail, password});
+
+        const avatarUrl = avatars.getInitialsURL(name);
+
+        return await database.createDocument(
+            appwriteConfig.databaseId, 
+            appwriteConfig.userCollectionId, 
+            ID.unique(),
+            {email:fakeEmail, name:usernameSlug, accountId: newAccount.$id, avatar: avatarUrl}
+        )
+        
+    } catch(e) {
+        throw new Error(e as string);
+    }
+}
+
 export const signIn = async ({email, password}: SignInParams) => {
     try {
          const session = await account.createEmailPasswordSession(email, password);
+    } catch (e) {
+        throw new Error(e as string);
+    }
+}
+
+export const signInWithFakeMail = async ({name, password}: SignInFakeMailParams) => {
+    try {
+        const usernameSlug = slugifyUsername(name);
+
+        const users = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            [Query.equal("name", usernameSlug)]
+        );
+        if (users.total === 0) {
+            throw new Error("User not found.");
+        }
+
+        const userDoc = users.documents[0];
+        const fakeEmail = userDoc.email as string;
+        if (!fakeEmail) throw new Error("Account mapping incomplete.");
+
+        await account.createEmailPasswordSession(fakeEmail, password);
     } catch (e) {
         throw new Error(e as string);
     }
@@ -60,7 +134,7 @@ export const changeName = async ({name}: ChangeNameParams) => {
     try {
         const user = await account.get();
 
-        await await account.updateName(name);
+        const usernameSlug = slugifyUsername(name);
 
         const userDocs = await database.listDocuments(
         appwriteConfig.databaseId,
@@ -72,12 +146,23 @@ export const changeName = async ({name}: ChangeNameParams) => {
             throw new Error("User document not found in user collection.");
         }
 
+        const existing = await database.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            [Query.equal("name", usernameSlug)]
+        );
+        if (existing.total > 0) {
+            throw new Error("User with username already exists");
+        }
+
         await database.updateDocument(
             appwriteConfig.databaseId, 
             appwriteConfig.userCollectionId, 
             userDocs.documents[0].$id,
             {name}
         )
+
+        await account.updateName(name);
 
     } catch (e) {
         throw new Error(e as string);
@@ -498,6 +583,28 @@ export const addUserToWatchlistWithMail = async (watchlistId: string, userMail: 
     }
 }
 
+
+export const addUserToWatchlistWithUserName = async (watchlistId: string, userName: string, addAdmin: boolean): Promise<boolean | undefined> => {
+    try {
+        const usernameSlug = slugifyUsername(userName);
+
+        const requestedUser = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.userCollectionId, [Query.equal("name", usernameSlug)]);
+
+        const userDoc = requestedUser.documents[0];
+
+        if (!userDoc) {
+            console.log("User not found with given username");
+            return false;
+        }
+
+        return addUserToWatchlist(watchlistId, userDoc?.accountId ?? "unknown user", addAdmin);;
+
+    } catch (error){
+        console.log(error);
+        throw error;
+    }
+}
+
 export const addUserToWatchlist = async (watchlistId: string, userId: string, addAdmin: boolean): Promise<boolean | undefined>  => {
     try {
         const currentWatchlist = await database.listDocuments(appwriteConfig.databaseId, appwriteConfig.watchlistMemberCollectionId,[Query.equal('watchlist_id', watchlistId)]);
@@ -528,6 +635,8 @@ export const addUserToWatchlist = async (watchlistId: string, userId: string, ad
                         user_ids: updatedUserList
                     }
                 );
+
+                return true;
             } else{              
                 console.log("User already exist in selected Watchlist");
                 return false;

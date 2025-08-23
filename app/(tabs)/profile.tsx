@@ -56,18 +56,13 @@ const profile = () => {
           <View className="flex flex-col items-center relative mt-5">
             <Image source={{uri: avatarUrl}} className="size-44 relative rounded-full"/>
             <Text className="text-2xl font-bold mt-2 text-white">{user?.name}</Text>
-            <Text className="text-light-300">{user?.email}</Text>
           </View>
         </View>
 
         <View className="flex flex-col mt-10 border-t pt-5 border-light-300">
-
-          
           <SettingsItem icon={icons.user} title="User Name" textStyle="text-light-300" path="../settings/changeName"/>
-          <SettingsItem icon={icons.mail} title="E-Mail" textStyle="text-light-300" path="../settings/changeMail"/>
           <SettingsItem icon={icons.lock} title="Password" textStyle="text-light-300" path="../settings/changePassword"/>
         </View>
-
 
         <View className="flex flex-col mt-5 border-t pt-5 border-light-300">
           <SettingsItem icon={icons.logout} title="Logout" textStyle="text-danger" onPress={handleLogout} showArrow={false}/>

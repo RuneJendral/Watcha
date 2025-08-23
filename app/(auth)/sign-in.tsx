@@ -1,7 +1,7 @@
 import DialogModal from "@/components/basicModals/DialogModal"
 import CustomButton from "@/components/CustomButton"
 import CustomInput from "@/components/CustomInput"
-import { signIn } from "@/services/appwrite"
+import { signInWithFakeMail } from "@/services/appwrite"
 import useAuthStore from "@/store/auth.store"
 import { Link, router } from "expo-router"
 import { useState } from "react"
@@ -9,14 +9,14 @@ import { Text, View } from "react-native"
 
 const SignIn = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [form, setForm] = useState({email: '',  password: ''});
+    const [form, setForm] = useState({name: '',  password: ''});
     const [dialogModalVisible, setDialogModalVisible] = useState(false);
     const [confirmText, setConfirmText] = useState("");
 
     const submit = async () => {
-        const {email, password} = form;
+        const {name, password} = form;
 
-        if(!email || !password){
+        if(!name || !password){
             setConfirmText("Please enter a valid username or password");
             setDialogModalVisible(true);
             return;
@@ -25,11 +25,11 @@ const SignIn = () => {
         setIsSubmitting(true)
 
         try{
-            await signIn({email, password});
+            await signInWithFakeMail({name, password});
             await useAuthStore.getState().fetchAuthenticatedUser();
             router.replace('/');
         } catch(error: any){
-            setConfirmText("Wrong email or password");
+            setConfirmText("Wrong username or password");
             setDialogModalVisible(true);
         } finally {
             setIsSubmitting(false);
@@ -47,10 +47,10 @@ const SignIn = () => {
             />
 
             <CustomInput 
-                placeholder="Enter your E-Mail" 
-                value={form.email} 
-                onChangeText={(text) => setForm((prev) => ({ ...prev, email: text}))} 
-                label="E-Mail" 
+                placeholder="Enter your Username" 
+                value={form.name} 
+                onChangeText={(text) => setForm((prev) => ({ ...prev, name: text}))} 
+                label="Username" 
                 keyboardType="email-address"
             />
 

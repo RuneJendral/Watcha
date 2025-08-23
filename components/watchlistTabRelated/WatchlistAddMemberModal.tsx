@@ -1,4 +1,4 @@
-import { addUserToWatchlistWithMail } from '@/services/appwrite';
+import { addUserToWatchlistWithUserName } from '@/services/appwrite';
 import { ManageMembersProps } from '@/type';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, SafeAreaView, ScrollView } from 'react-native';
@@ -7,15 +7,15 @@ import CustomInput from '../CustomInput';
 import DialogModal from '../basicModals/DialogModal';
 
 const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchlistId, onClose })  => { 
-  const [form, setForm] = useState({email: ''});
+  const [form, setForm] = useState({username: ''});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dialogModalVisible, setDialogModalVisible] = useState(false);
   const [confirmText, setConfirmText] = useState("");
 
   const handleAddMember = async (watchlistId: string) => {
-    const {email} = form;
+    const {username} = form;
 
-    if(!email){
+    if(!username){
         setConfirmText("Please enter valid email");
         setDialogModalVisible(true);
         return;
@@ -24,16 +24,16 @@ const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchli
     setIsSubmitting(true)
 
     try {
-        const canAdd = await addUserToWatchlistWithMail(watchlistId, email, false);
+        const canAdd = await addUserToWatchlistWithUserName(watchlistId, username, false);
 
-        setConfirmText(canAdd ? `Added ${email} to watchlist` : `${email} not found or already added`);
+        setConfirmText(canAdd ? `Added ${username} to watchlist` : `${username} not found or already added`);
         setDialogModalVisible(true);
 
-        setForm((prev) => ({ ...prev, email: ""}));
+        setForm((prev) => ({ ...prev, username: ""}));
 
         onClose(); 
     } catch (e) {
-        setConfirmText(`could not add ${email}`);
+        setConfirmText(`could not add ${username}`);
         setDialogModalVisible(true);
         console.error('Could not add member to watchlist', e);
     } finally {
@@ -56,9 +56,9 @@ const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchli
           <KeyboardAvoidingView behavior={'padding'} keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
             <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }} keyboardShouldPersistTaps="handled">
               <CustomInput 
-                  placeholder="User E-Mail" 
-                  value={form.email} 
-                  onChangeText={(text) => setForm((prev) => ({ ...prev, email: text}))} 
+                  placeholder="username" 
+                  value={form.username} 
+                  onChangeText={(text) => setForm((prev) => ({ ...prev, username: text}))} 
                   label="Add Member" 
                   keyboardType="email-address"
               />

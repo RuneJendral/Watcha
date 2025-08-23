@@ -9,10 +9,14 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.runejendral.Watcha",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "icon":"./assets/images/adaptive-icon.png",
+      "icon": "./assets/images/adaptive-icon.png",
       "edgeToEdgeEnabled": true,
       "package": "com.runejendral.Watcha"
     },

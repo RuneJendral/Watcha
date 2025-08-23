@@ -1,7 +1,7 @@
 import DialogModal from "@/components/basicModals/DialogModal"
 import CustomButton from "@/components/CustomButton"
 import CustomInput from "@/components/CustomInput"
-import { createUser } from "@/services/appwrite"
+import { createUserWithFakeMail } from "@/services/appwrite"
 import useAuthStore from "@/store/auth.store"
 import { Link, router } from "expo-router"
 import { useState } from "react"
@@ -9,14 +9,14 @@ import { Text, View } from "react-native"
 
 const SignUp = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [form, setForm] = useState({name: '', email: '', password: '', repeatPassword: ''});
+    const [form, setForm] = useState({name: '', password: '', repeatPassword: ''});
     const [dialogModalVisible, setDialogModalVisible] = useState(false);
     const [confirmText, setConfirmText] = useState("");
 
     const submit = async () => {
-        const {name, email, password, repeatPassword} = form;
+        const {name, password, repeatPassword} = form;
 
-        if(!name || !email || !password || !repeatPassword){
+        if(!name || !password || !repeatPassword){
             setConfirmText("Please enter a valid username or password");
             setDialogModalVisible(true);
             return;
@@ -31,7 +31,7 @@ const SignUp = () => {
         setIsSubmitting(true)
 
         try{
-            await createUser({email, password, name});
+            await createUserWithFakeMail({password, name});
             await useAuthStore.getState().fetchAuthenticatedUser();
             router.replace('/');
         } catch(error: any){
@@ -53,18 +53,10 @@ const SignUp = () => {
             />
 
             <CustomInput 
-                placeholder="Enter your User-Name" 
+                placeholder="Enter your Username" 
                 value={form.name} 
                 onChangeText={(text) => setForm((prev) => ({ ...prev, name: text}))} 
-                label="Name" 
-                keyboardType="email-address"
-            />
-
-            <CustomInput 
-                placeholder="Enter your E-Mail" 
-                value={form.email} 
-                onChangeText={(text) => setForm((prev) => ({ ...prev, email: text}))} 
-                label="E-Mail" 
+                label="Username" 
                 keyboardType="email-address"
             />
 
@@ -80,7 +72,7 @@ const SignUp = () => {
                 placeholder="Repeat your Password" 
                 value={form.repeatPassword} 
                 onChangeText={(text) => setForm((prev) => ({ ...prev, repeatPassword: text}))} 
-                label="repeat Password" 
+                label="Repeat Password" 
                 secureTextEntry={true}
             />
 

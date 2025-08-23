@@ -44,8 +44,18 @@ interface CreateUserParams {
     name: string;
 }
 
+interface CreateUserFakeMailParams {
+    password: string;
+    name: string;
+}
+
 interface SignInParams {
     email: string;
+    password: string;
+}
+
+interface SignInFakeMailParams {
+    name: string;
     password: string;
 }
 
