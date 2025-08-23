@@ -7,8 +7,8 @@ import { deleteWatchlist, getUserWatchlists } from '@/services/appwrite'
 import useFetch from '@/services/useFetch'
 import { WatchlistProps } from '@/type'
 import { router } from 'expo-router'
-import React, { useState } from 'react'
-import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import React, { useCallback, useState } from 'react'
+import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const group = () => {
 
@@ -22,40 +22,51 @@ const group = () => {
   | (WatchlistProps & { type: 'watchlist' });
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
- const {data: watchlists, loading: watchlistsLoading, error: watchlistsError, refetch: refetchWatchlist} = useFetch(getUserWatchlists, true, []);
+  const {data: watchlists, loading: watchlistsLoading, error: watchlistsError, refetch: refetchWatchlist} = useFetch(getUserWatchlists, true, []);
 
- const extendedWatchlists: WatchlistItem[] = [
-  { type: 'create' },
-  ...(Array.isArray(watchlists) ? 
-  watchlists.map(w => ({
-    ...w,
-    type: 'watchlist' as const,
-    selected: selectedWatchlists.includes(w.id),
-  })) 
-: [])
-];
+  const extendedWatchlists: WatchlistItem[] = [
+    { type: 'create' },
+    ...(Array.isArray(watchlists) ? 
+    watchlists.map(w => ({
+      ...w,
+      type: 'watchlist' as const,
+      selected: selectedWatchlists.includes(w.id),
+    })) 
+    : [])
+  ];
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetchWatchlist();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchWatchlist]);
 
   const toggleSelection = (id: string) => {
-  if (selectedWatchlists.includes(id)) {
-    setSelectedWatchlists(prev => prev.filter(w => w !== id));
-  } else {
-    setSelectedWatchlists(prev => [...prev, id]);
-  }
-};
+    if (selectedWatchlists.includes(id)) {
+      setSelectedWatchlists(prev => prev.filter(w => w !== id));
+    } else {
+      setSelectedWatchlists(prev => [...prev, id]);
+    }
+  };
 
-const handleLongPress = (id: string) => {
-  setSelectionMode(true);
-  toggleSelection(id);
-};
+  const handleLongPress = (id: string) => {
+    setSelectionMode(true);
+    toggleSelection(id);
+  };
 
-const clearSelection = () => {
-  setSelectionMode(false);
-  setSelectedWatchlists([]);
-};
+  const clearSelection = () => {
+    setSelectionMode(false);
+    setSelectedWatchlists([]);
+  };
 
-const handleDeleteSelected = async () => {
-  for (const watchlistId of selectedWatchlists) {
-    await deleteWatchlist(watchlistId);
+  const handleDeleteSelected = async () => {
+    for (const watchlistId of selectedWatchlists) {
+      await deleteWatchlist(watchlistId);
   }
 
   clearSelection();
@@ -68,7 +79,9 @@ const handleDeleteSelected = async () => {
   return (
     <KeyboardAvoidingView className="flex-1 bg-primary" behavior={'padding'} keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
       <Image source={images.bg} className="absolute w-full y-0"/>
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
+      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}} refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff"/>
+      }>
         <Image source={icons.logo} className="w-10 h-10 mt-20 mx-auto"/>
 
         {watchlistsLoading ? (

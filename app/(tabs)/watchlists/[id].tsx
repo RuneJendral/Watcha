@@ -10,7 +10,7 @@ import { WatchlistMovies } from '@/type';
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 
 const WatchlistCollection = () => {
@@ -31,10 +31,20 @@ const WatchlistCollection = () => {
   } = useFetch(() => getMoviesWatchlist(id as string), true, [id]);
 
   useFocusEffect(
-  useCallback(() => {
-    refetchWatchlistMovies();
-  }, [id])
-);
+    useCallback(() => {
+      refetchWatchlistMovies();
+    }, [id])
+  );
+
+  const [refreshing, setRefreshing] = useState(false);
+    const onRefresh = useCallback(async () => {
+      setRefreshing(true);
+      try {
+        await refetchWatchlistMovies();
+      } finally {
+        setRefreshing(false);
+      }
+  }, [refetchWatchlistMovies]);
 
   const toggleSelection = (movieId: string) => {
     if (selectedMovies.includes(movieId)) {
@@ -137,7 +147,9 @@ const WatchlistCollection = () => {
         )}
       </View>
       
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
+      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}} refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff"/>
+      }>
         {watchlistLoading ? (
             <ActivityIndicator size="large" color="#0000ff" className="mt-10 self-center"/>
         ) : watchlistError ? (
