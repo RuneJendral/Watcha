@@ -117,14 +117,11 @@ const WatchlistCollection = () => {
         <View className="flex-row items-center justify-between">
           <Text className="text-lg text-white font-bold">{watchlistName ?? 'loading watchlist...'}</Text>
           <View className="flex-row items-center">
-            <TouchableOpacity className="mr-5" onPress={() => {}}>
+            <TouchableOpacity className="mr-5" onPress={() => {router.push(`/(tabs)/voting/${id}`)}}>
               <Image source={icons.voting} className="w-7 h-7" resizeMode="contain" />
             </TouchableOpacity>
             <TouchableOpacity className="mr-5" onPress={() => setRandomMovieModalVisible(true)}>
               <Image source={icons.dice} className="w-7 h-7" resizeMode="contain" />
-            </TouchableOpacity>
-            <TouchableOpacity className="mr-5" onPress={() => setAddMemberModalVisible(true)}>
-              <Image source={icons.add} className="w-7 h-7" resizeMode="contain" />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setModalVisible(true)}>
               <Image source={icons.groupHighlight} className="w-7 h-7" resizeMode="contain" />

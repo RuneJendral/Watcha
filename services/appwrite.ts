@@ -16,7 +16,7 @@ export const appwriteConfig = {
 export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!).setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!).setPlatform(appwriteConfig.platform);
 export const account = new Account(client);
 export const database = new Databases(client);
-const avatars = new Avatars(client);
+export const avatars = new Avatars(client);
 const maximumWatchlistCreations  = 3;
 
 export function slugifyUsername(raw: string) {
@@ -353,50 +353,59 @@ export const getWatchlistName = async (watchlist_id: string): Promise<string | u
     }
 }
 
-export const getWatchlistMembers = async (watchlist_id: string): Promise<WatchlistMember[] | undefined> => {
-    try {
-        const watchlistMembers = await database.listDocuments(
+export const getWatchlistMembers = async (watchlist_id: string): Promise<WatchlistMember[]> => {
+
+    const watchlistMembers = await database.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.watchlistMemberCollectionId,
+        [Query.equal("watchlist_id", watchlist_id)]
+    );
+
+    const allUserIds = watchlistMembers.documents.flatMap((doc: any) => doc.user_ids ?? []);
+    const uniqueUserIds = Array.from(new Set(allUserIds));
+
+    if (uniqueUserIds.length === 0) return [];
+
+    let userDocs: any[] = [];
+
+    try {        
+        const res = await database.listDocuments(
             appwriteConfig.databaseId,
-            appwriteConfig.watchlistMemberCollectionId,
-            [Query.equal("watchlist_id", watchlist_id)]
+            appwriteConfig.userCollectionId,
+            [Query.equal("accountId", uniqueUserIds)]
         );
 
+        userDocs = res.documents;
 
-        const allUserIds = watchlistMembers.documents.flatMap(
-            (doc) => doc.user_ids ?? []
-        );
-
-        const detailedMembers: WatchlistMember[] = [];
-
-        for (const userId of allUserIds) {
-            try {
-                const userResult = await database.listDocuments(
-                    appwriteConfig.databaseId,
-                    appwriteConfig.userCollectionId,
-                    [Query.equal("accountId", userId)]
-                );
-
-                const userDoc = userResult.documents[0];
-                const userName = userDoc?.name ?? "unknown user";
-
-                detailedMembers.push({
-                    id: userId,
-                    name: userName,
-                });
-            } catch (err) {
-                console.warn("error while loading user", userId, err);
-                detailedMembers.push({
-                    id: userId,
-                    name: "unknown user",
-                });
-            }
-        }
-
-        return detailedMembers;
-    }catch (error) {
-        console.log("Fehler bei getWatchlistMembers:", error);
-        return undefined;
+    } catch {
+        userDocs = (
+            await Promise.all(
+                uniqueUserIds.map(async (uid) => {
+                    const r = await database.listDocuments(
+                        appwriteConfig.databaseId,
+                        appwriteConfig.userCollectionId,
+                        [Query.equal("accountId", uid)]
+                    );
+                    return r.documents[0];
+                })
+            )
+        ).filter(Boolean);
     }
+
+    const byAccountId = new Map<string, any>(
+        userDocs.map((doc: any) => [doc.accountId, doc])
+    );
+
+    const detailedMembers: WatchlistMember[] = uniqueUserIds.map((uid) => {
+        const doc = byAccountId.get(uid);
+        return {
+            id: uid,
+            name: doc?.name ?? "unknown user",
+            avatar: doc?.avatar ?? undefined,
+        };
+    });
+
+    return detailedMembers;
 };
 
 const toResultError = (err: unknown, fallback = "Something went wrong"): CreateWatchlistResult => {
