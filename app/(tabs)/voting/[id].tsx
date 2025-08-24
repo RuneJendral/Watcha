@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
+
 const WatchlistVoting = () => {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const { id } = useLocalSearchParams();

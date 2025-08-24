@@ -8,7 +8,7 @@ import { getMoviesWatchlist, getWatchlistName, removeMovieFromWatchlist } from '
 import useFetch from '@/services/useFetch';
 import { WatchlistMovies } from '@/type';
 import { useFocusEffect } from '@react-navigation/native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
@@ -117,9 +117,11 @@ const WatchlistCollection = () => {
         <View className="flex-row items-center justify-between">
           <Text className="text-lg text-white font-bold">{watchlistName ?? 'loading watchlist...'}</Text>
           <View className="flex-row items-center">
-            <TouchableOpacity className="mr-5" onPress={() => {router.push(`/(tabs)/voting/${id}`)}}>
-              <Image source={icons.voting} className="w-7 h-7" resizeMode="contain" />
-            </TouchableOpacity>
+            <Link className="mr-5" href={`/(tabs)/voting/${id}`} asChild>
+              <TouchableOpacity className="mr-5" >
+                <Image source={icons.voting} className="w-7 h-7" resizeMode="contain"/>
+              </TouchableOpacity>
+            </Link>
             <TouchableOpacity className="mr-5" onPress={() => setRandomMovieModalVisible(true)}>
               <Image source={icons.dice} className="w-7 h-7" resizeMode="contain" />
             </TouchableOpacity>

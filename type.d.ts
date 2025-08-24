@@ -252,3 +252,16 @@ interface WatchlistMovies {
   onPress?: () => void;
   onLongPress?: () => void;
 }
+
+type VoteChoice = "yes" | "no";
+
+type WatchlistVoting = {
+  $id: string;
+  watchlist_id: string;
+  created_by: string;           
+  created_at: string;           
+  expires_at?: string;          
+  status: "active" | "closed";
+  movie_ids: string[];         
+  votes: Record<string, Record<string, VoteChoice>>; 
+};
