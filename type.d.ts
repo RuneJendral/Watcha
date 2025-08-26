@@ -253,15 +253,18 @@ interface WatchlistMovies {
   onLongPress?: () => void;
 }
 
-type VoteChoice = "yes" | "no";
+type VoteValue = 1 | -1;
 
-type WatchlistVoting = {
-  $id: string;
+type VotingSession = Models.Document & {
   watchlist_id: string;
-  created_by: string;           
-  created_at: string;           
-  expires_at?: string;          
-  status: "active" | "closed";
-  movie_ids: string[];         
-  votes: Record<string, Record<string, VoteChoice>>; 
+  status: "draft" | "active" | "closed";
+  movie_ids: string[];               // TMDB ids (number-like) or your internal ids
+  endsAt?: string;                   // ISO
+  votes?: Record<string, Record<string, VoteValue>>; // votes[userId][movie_id] = 1 | -1
+};
+
+type WatchlistMovieDoc = Models.Document & {
+  movie_id: string;        // stored as string in your collection
+  title: string;
+  poster_url: string;
 };

@@ -77,7 +77,12 @@ const WatchlistCollection = () => {
   }
  
   const handleVotingSelected = async () => {
+    if(!selectedMovies.length) 
+      return;
 
+    router.push({pathname: '/(tabs)/voting/[id]', params: {id: id as string, selected: JSON.stringify(selectedMovies)}});
+
+    clearSelection();
   }
 
   useEffect(() => {
