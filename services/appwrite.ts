@@ -1,4 +1,4 @@
-import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserFakeMailParams, CreateUserParams, CreateWatchlistResult, Movie, MovieDetails, SignInFakeMailParams, SignInParams, TrendingMovie, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
+import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserFakeMailParams, CreateUserParams, CreateWatchlistResult, Movie, MovieDetails, SignInFakeMailParams, SignInParams, TrendingMovie, VoteDoc, VoteValue, VotingSessionDoc, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
 import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -11,7 +11,8 @@ export const appwriteConfig = {
     watchlistCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_COLLECTION_ID!,
     watchlistMemberCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_MEMBERS_COLLECTION_ID!,
     watchlistMovieCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_MOVIES_COLLECTION_ID!,
-    watchlistVotingCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_VOTING_COLLECTION_ID!
+    watchlistVotingSessionCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_VOTING_SESSION_COLLECTION_ID!,
+    watchlistVoteCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_VOTES_COLLECTION_ID!
 }
 
 export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!).setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!).setPlatform(appwriteConfig.platform);
@@ -19,6 +20,7 @@ export const account = new Account(client);
 export const database = new Databases(client);
 export const avatars = new Avatars(client);
 const maximumWatchlistCreations  = 3;
+const nowIso = () => new Date().toISOString();
 
 export function slugifyUsername(raw: string) {
     return raw
@@ -795,4 +797,170 @@ export const removeMovieFromWatchlist = async (watchlistId: string, movieId: str
         console.log(error);
         throw error;
     }
+}
+
+export async function createVotingSession(
+  watchlistId: string,
+  movieIds: string[],
+  opts: { minutes: number; allowSkip: boolean }
+): Promise<VotingSessionDoc> {
+  const end = new Date(Date.now() + Math.max(1, opts.minutes) * 60_000).toISOString();
+
+  const doc = await database.createDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    ID.unique(),
+    {
+      watchlist_id: watchlistId,   // string
+      status: "active",            // enum: active | closed | draft
+      movie_ids: movieIds,         // string[]
+      ends_at: end,                // ISO string
+      allow_skip: !!opts.allowSkip // boolean
+    }
+  );
+  return doc as unknown as VotingSessionDoc;
+}
+
+export async function getActiveVotingSession(watchlistId: string) {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    [Query.equal("watchlist_id", watchlistId), Query.equal("status", "active")]
+  );
+  const s = res.documents[0] as unknown as VotingSessionDoc | undefined;
+  if (s && new Date(s.ends_at).getTime() <= Date.now()) {
+    await closeVotingSession(s.$id);
+    return undefined;
+  }
+  return s;
+}
+
+export async function closeVotingSession(sessionId: string) {
+  return database.updateDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    sessionId,
+    { status: "closed" }
+  );
+}
+
+export async function castVote(sessionId: string, movieId: string, value: VoteValue) {
+  const me = await account.get();
+
+  // idempotent: one vote per (user, movie) -> update
+  const existing = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [Query.equal("session_id", sessionId), Query.equal("user_id", me.$id), Query.equal("movie_id", movieId)]
+  );
+
+  if (existing.total > 0) {
+    return database.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.watchlistVoteCollectionId,
+      existing.documents[0].$id,
+      { value }
+    );
+  }
+
+  return database.createDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    ID.unique(),
+    { session_id: sessionId, user_id: me.$id, movie_id: movieId, value }
+  );
+}
+
+export async function tallyVotes(sessionId: string) {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [Query.equal("session_id", sessionId), Query.limit(1000)]
+  );
+  const scores: Record<string, number> = {};
+  for (const d of res.documents as unknown as VoteDoc[]) {
+    const delta = d.value === "like" ? 1 : -1;
+    scores[d.movie_id] = (scores[d.movie_id] ?? 0) + delta;
+  }
+  return scores;
+}
+
+export async function getUserVotesForSession(sessionId: string) {
+  const me = await account.get();
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [Query.equal("session_id", sessionId), Query.equal("user_id", me.$id), Query.limit(1000)]
+  );
+  return res.documents as unknown as VoteDoc[];
+}
+
+export async function hasUserCompletedVoting(sessionId: string, movieIds: string[]) {
+  const myVotes = await getUserVotesForSession(sessionId);
+  const voted = new Set(myVotes.map(v => String(v.movie_id)));
+  const total = new Set((movieIds ?? []).map(String));
+  return total.size > 0 && voted.size >= total.size;
+}
+
+export async function aggregateVotes(sessionId: string) {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [Query.equal("session_id", sessionId), Query.limit(10000)]
+  );
+  const scores: Record<string,{likes:number;dislikes:number;total:number}> = {};
+  for (const v of res.documents as unknown as VoteDoc[]) {
+    const k = String(v.movie_id);
+    if (!scores[k]) scores[k] = { likes: 0, dislikes: 0, total: 0 };
+    if (v.value === "like") scores[k].likes += 1;
+    else scores[k].dislikes += 1;
+    scores[k].total += 1;
+  }
+  return scores;
+}
+
+export async function getWinnerForSession(sessionId: string) {
+  const scores = await aggregateVotes(sessionId);
+  const entries = Object.entries(scores);
+  if (entries.length === 0) return { winnerId: undefined, scores };
+  entries.sort((a, b) => {
+    const [,A] = a; const [,B] = b;
+    const netA = A.likes - A.dislikes;
+    const netB = B.likes - B.dislikes;
+    if (netB !== netA) return netB - netA;
+    if (B.likes !== A.likes) return B.likes - A.likes;
+    return B.total - A.total;
+  });
+  return { winnerId: entries[0][0], scores };
+}
+
+export async function getWatchlistMovieCard(movieId: string) {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistMovieCollectionId,
+    [Query.equal("movie_id", movieId), Query.limit(1)]
+  );
+  const doc = res.documents[0] as any;
+  if (!doc) return undefined;
+  return { title: doc.title as string, poster_url: doc.poster_url as string | undefined };
+}
+
+export async function deleteVotingSessionCascade(sessionId: string) {
+  const votes = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [Query.equal("session_id", sessionId), Query.limit(10000)]
+  );
+  for (const v of votes.documents) {
+    await database.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.watchlistVoteCollectionId,
+      v.$id
+    );
+  }
+  await database.deleteDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    sessionId
+  );
 }
