@@ -2,14 +2,14 @@
   "expo": {
     "name": "Watcha",
     "slug": "Watcha",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/adaptive-icon.png",
     "scheme": "movies",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.runejendral.Watcha",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -32,7 +32,7 @@
         {
           "image": "./assets/images/adaptive-icon.png",
           "imageWidth": 200,
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#212121"
         }
       ]
     ],

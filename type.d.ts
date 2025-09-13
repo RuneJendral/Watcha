@@ -258,10 +258,10 @@ export type VoteValue = "like" | "dislike";
 export interface VotingSessionDoc {
   $id: string;
   watchlist_id: string;
-  status: "draft" | "active" | "closed";
+  status: "active" | "closed" | "draft";
   movie_ids: string[];
-  ends_at: string;           // ISO
-  allow_skip: boolean;
+  ends_at: string;            // ISO
+  allow_skip?: boolean;
   $createdAt: string;
   $updatedAt: string;
 }
@@ -271,7 +271,5 @@ export interface VoteDoc {
   session_id: string;
   user_id: string;
   movie_id: string;
-  value: VoteValue;
-  $createdAt: string;
-  $updatedAt: string;
+  value: "like" | "dislike";
 }

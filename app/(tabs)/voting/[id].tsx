@@ -2,7 +2,19 @@
 import { images } from "@/constants/images";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, BackHandler, Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  BackHandler,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Swiper from "react-native-deck-swiper";
 
 import {
@@ -10,11 +22,13 @@ import {
   closeVotingSession,
   createVotingSession,
   deleteVotingSessionCascade,
-  getActiveVotingSession, getMoviesWatchlist,
+  getLatestVotingSession, // ⬅️ nutzt neueste Session (active ODER closed)
+  getMoviesWatchlist,
   getUserVotesForSession,
   getWatchlistMovieCard,
   getWinnerForSession,
-  hasUserCompletedVoting, tallyVotes
+  hasUserCompletedVoting,
+  tallyVotes,
 } from "@/services/appwrite";
 import type { VoteValue, VotingSessionDoc, WatchlistMovies } from "@/type";
 
@@ -35,48 +49,68 @@ export default function VotingScreen() {
   const [finished, setFinished] = useState(false);
   const [minutes, setMinutes] = useState("20");
   const [allowSkip, setAllowSkip] = useState(true);
-  const [timeLeftMs, setTimeLeftMs] = useState(-1);
+  const [timeLeftMs, setTimeLeftMs] = useState(-1); // -1 = uninitialized
 
   // winner view
   const [winner, setWinner] = useState<{ id?: string; title?: string; poster_url?: string } | null>(null);
-  const [resultScores, setResultScores] = useState<Record<string,{likes:number;dislikes:number;total:number}> | null>(null);
+  const [resultScores, setResultScores] =
+    useState<Record<string, { likes: number; dislikes: number; total: number }> | null>(null);
 
   const swiperRef = useRef<Swiper<any>>(null);
+  
+  const { height } = Dimensions.get("window");
+  const SWIPER_HEIGHT = Math.min(480, Math.round(height * 0.55));
 
   const filterMoviesFor = useCallback((all: WatchlistMovies[], ids: string[]) => {
     const set = new Set(ids.map(String));
-    return all.filter(m => set.has(String(m.movie_id)));
+    return all.filter((m) => set.has(String(m.movie_id)));
   }, []);
 
   const refreshScores = useCallback(async (sid: string) => {
-    try { setScores(await tallyVotes(sid)); } catch {}
+    try {
+      setScores(await tallyVotes(sid));
+    } catch {}
   }, []);
 
-  const startCountdown = (endsAt?: string) => {
-    if (!endsAt) return undefined as undefined | (() => void);
-    const calc = () => Math.max(0, new Date(endsAt).getTime() - Date.now());
-    // seed immediately so we never sit at -1 with a valid session
-    setTimeLeftMs(calc());
-    const t = setInterval(() => setTimeLeftMs(calc()), 1000);
-    return () => clearInterval(t);
+  const seedCountdown = (endsAt?: string) => {
+    if (!endsAt) return setTimeLeftMs(-1);
+    setTimeLeftMs(Math.max(0, new Date(endsAt).getTime() - Date.now()));
   };
 
-  // load current state or preselected movies
+  const computeResults = useCallback(async (sid: string) => {
+    const { winnerId, scores } = await getWinnerForSession(sid);
+    setResultScores(scores ?? null);
+    if (winnerId) {
+      const card = await getWatchlistMovieCard(winnerId);
+      setWinner({ id: winnerId, title: card?.title, poster_url: card?.poster_url });
+    } else {
+      setWinner({ id: undefined, title: "No votes cast" });
+    }
+  }, []);
+
+  // load latest session (active OR closed); or preselected list if none
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     setError(null);
     try {
-      const s = await getActiveVotingSession(id);
+      const latest = await getLatestVotingSession(id);
       const all = (await getMoviesWatchlist(id)) ?? [];
 
-      if (s) {
-        setSession(s);
-        setTimeLeftMs(Math.max(0, new Date(s.ends_at).getTime() - Date.now()));
-        const inSession = filterMoviesFor(all, s.movie_ids ?? []);
+      if (latest) {
+        setSession(latest);
+        const inSession = filterMoviesFor(all, latest.movie_ids ?? []);
         setMovies(inSession);
-        setFinished(await hasUserCompletedVoting(s.$id, s.movie_ids ?? []));
-        await refreshScores(s.$id);
+        await refreshScores(latest.$id);
+
+        if (latest.status === "active") {
+          seedCountdown(latest.ends_at);
+          setFinished(await hasUserCompletedVoting(latest.$id, latest.movie_ids ?? []));
+        } else {
+          // closed -> results persist until user clears
+          setTimeLeftMs(0);
+          await computeResults(latest.$id);
+        }
       } else {
         setSession(undefined);
         if (selected) {
@@ -87,71 +121,63 @@ export default function VotingScreen() {
         }
         setFinished(false);
         setTimeLeftMs(-1);
+        setWinner(null);
+        setResultScores(null);
       }
     } catch (e: any) {
       setError(e?.message ?? "Failed to load voting.");
     } finally {
       setLoading(false);
     }
-  }, [id, selected, filterMoviesFor, refreshScores]);
-
-  useEffect(() => { load(); }, [load]);
+  }, [id, selected, filterMoviesFor, refreshScores, computeResults]);
 
   useEffect(() => {
-    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
-      router.replace(`/watchlists/${id}`); // geht zurück zur Watchlist-Page
-      return true; // verhindert Default-Verhalten
-    });
-    
-    return () => backHandler.remove();
-  }, [id]);
+    load();
+  }, [load]);
 
-  // drive countdown from session.ends_at
-  useEffect(() => {
-    if (!session?.ends_at) return;
-    const cleanup = startCountdown(session.ends_at);
-    return cleanup;
-  }, [session?.ends_at]);
-
-  // live score polling during session
-  useEffect(() => {
-    if (!session) return;
-    const i = setInterval(() => refreshScores(session.$id), 3000);
-    return () => clearInterval(i);
-  }, [session, refreshScores]);
-
+  // Refresh beim Tab-Fokus
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
   );
 
-  // when time runs out → close, compute winner & show results
+  // Zurück-Button -> Watchlist
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
+      router.replace(`/watchlists/${id}`);
+      return true;
+    });
+    return () => backHandler.remove();
+  }, [id]);
+
+  // countdown tick (nur bei aktiver Session)
+  useEffect(() => {
+    if (!session || session.status !== "active") return;
+    const t = setInterval(() => {
+      const left = Math.max(0, new Date(session.ends_at).getTime() - Date.now());
+      setTimeLeftMs(left);
+    }, 1000);
+    return () => clearInterval(t);
+  }, [session?.ends_at, session?.status]);
+
+  // time reached -> only CLOSE (keep data) and show results (persist)
   useEffect(() => {
     (async () => {
-      if (!session) return;
-      if (timeLeftMs < 0) return; // countdown not initialized yet
+      if (!session || session.status !== "active") return;
+      if (timeLeftMs < 0) return; // not initialized
       const pastDeadline = Date.now() >= new Date(session.ends_at).getTime();
       if (timeLeftMs === 0 && pastDeadline) {
-        try {
-          await closeVotingSession(session.$id);
-          const { winnerId, scores } = await getWinnerForSession(session.$id);
-          setResultScores(scores);
-          if (winnerId) {
-            const card = await getWatchlistMovieCard(winnerId);
-            setWinner({ id: winnerId, title: card?.title, poster_url: card?.poster_url });
-          } else {
-            setWinner({ id: undefined, title: "No votes cast" });
-          }
-        } catch {}
+        await closeVotingSession(session.$id); // mark closed
+        setSession({ ...session, status: "closed" });
+        await computeResults(session.$id);
       }
     })();
+  }, [timeLeftMs, session?.$id, session?.ends_at, session?.status, computeResults]);
 
- // watching ends_at avoids stale closure if session object changes
-}, [timeLeftMs, session?.ends_at]);
-
-  const onSwipe = async (index: number, dir: "left"|"right"|"top") => {
-    if (!session || finished) return;
+  // ---------- actions ----------
+  const onSwipe = async (index: number, dir: "left" | "right" | "top") => {
+    if (!session || session.status !== "active" || finished) return;
     const movie = movies[index];
     if (!movie) return;
     const value: VoteValue = dir === "right" ? like : dislike;
@@ -160,7 +186,7 @@ export default function VotingScreen() {
       await refreshScores(session.$id);
 
       const myVotes = await getUserVotesForSession(session.$id);
-      if (new Set(myVotes.map(v => String(v.movie_id))).size >= (session.movie_ids ?? []).length) {
+      if (new Set(myVotes.map((v) => String(v.movie_id))).size >= (session.movie_ids ?? []).length) {
         setFinished(true);
       }
     } catch {}
@@ -177,12 +203,16 @@ export default function VotingScreen() {
     try {
       setLoading(true);
       const mins = Math.max(1, parseInt(minutes || "15", 10));
-      const s = await createVotingSession(id, movies.map(m => String(m.movie_id)), { minutes: mins, allowSkip });
+      // ⚠️ createVotingSession löscht alte Sessions für die Watchlist automatisch
+      const s = await createVotingSession(
+        id,
+        movies.map((m) => String(m.movie_id)),
+        { minutes: mins, allowSkip }
+      );
       setSession(s);
       setFinished(false);
       await refreshScores(s.$id);
-      setTimeLeftMs(Math.max(0, new Date(s.ends_at).getTime() - Date.now()));
-      startCountdown(s.ends_at);
+      seedCountdown(s.ends_at);
     } catch (e: any) {
       setError(e?.message ?? "Could not start voting.");
     } finally {
@@ -190,6 +220,16 @@ export default function VotingScreen() {
     }
   };
 
+  // manuell jetzt schließen (keine Löschung)
+  const onCloseNow = async () => {
+    if (!session || session.status !== "active") return;
+    await closeVotingSession(session.$id);
+    setSession({ ...session, status: "closed" });
+    setTimeLeftMs(0);
+    await computeResults(session.$id);
+  };
+
+  // Nutzer-getrieben: Session + Votes löschen (persistente Ergebnisse verschwinden)
   const onClearSession = async () => {
     if (!session) return;
     try {
@@ -199,22 +239,32 @@ export default function VotingScreen() {
       setWinner(null);
       setResultScores(null);
       setScores({});
-      setTimeLeftMs(0);
+      setTimeLeftMs(-1);
       await load();
     } finally {
       setLoading(false);
     }
   };
 
-  const Header = useMemo(() => (
-    <View className="px-5 pt-20 mb-3">
-      <View className="flex-row items-center justify-between">
-        <Text className="text-lg text-white font-bold">Voting</Text>
+  // ---------- UI helpers ----------
+  const Header = useMemo(
+    () => (
+      <View className="px-5 pt-20 mb-3">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-lg text-white font-bold">Voting</Text>
+          {session?.status === "closed" ? (
+            <TouchableOpacity onPress={onClearSession} className="bg-accent px-3 py-1.5 rounded-lg">
+              <Text className="text-white font-semibold">Finish & Clear</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
-    </View>
-  ), []);
+    ),
+    [session?.status]
+  );
 
   const timeLeftText = useMemo(() => {
+    if (timeLeftMs < 0) return "--:--";
     const s = Math.ceil(timeLeftMs / 1000);
     const mm = Math.floor(s / 60).toString().padStart(2, "0");
     const ss = (s % 60).toString().padStart(2, "0");
@@ -223,41 +273,54 @@ export default function VotingScreen() {
 
   // ---------- render states ----------
   if (loading) {
-    return <View className="flex-1 bg-primary justify-center items-center">
-      <ActivityIndicator color="#fff" size="large" />
-    </View>;
+    return (
+      <View className="flex-1 bg-primary justify-center items-center">
+        <ActivityIndicator color="#fff" size="large" />
+      </View>
+    );
   }
 
   if (error) {
-    return <View className="flex-1 bg-primary">
-      <Image source={images.bg} className="absolute w-full y-0" />
-      {Header}
-      <View className="px-5"><Text className="text-red-400">{error}</Text></View>
-    </View>;
+    return (
+      <View className="flex-1 bg-primary">
+        <Image source={images.bg} className="absolute w-full y-0" />
+        {Header}
+        <View className="px-5">
+          <Text className="text-red-400">{error}</Text>
+        </View>
+      </View>
+    );
   }
 
   // no session & no selection
   if (!session && movies.length === 0) {
-    return <View className="flex-1 bg-primary">
-      <Image source={images.bg} className="absolute w-full y-0" />
-      {Header}
-      <View className="px-5">
-        <Text className="text-white text-base">
-          No active voting. Select movies in the watchlist first, then open this tab to configure and start a session.
-        </Text>
+    return (
+      <View className="flex-1 bg-primary">
+        <Image source={images.bg} className="absolute w-full y-0" />
+        {Header}
+        <View className="px-5">
+          <Text className="text-white text-base">
+            No active voting. Select movies in the watchlist first, then open this tab to configure and start a session.
+          </Text>
+        </View>
       </View>
-    </View>;
+    );
   }
 
   // pre-start config
   if (!session && movies.length > 0) {
     return (
-      <KeyboardAvoidingView className="flex-1 bg-primary" behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <KeyboardAvoidingView
+        className="flex-1 bg-primary"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         <Image source={images.bg} className="absolute w-full y-0" />
         {Header}
 
         <ScrollView className="px-5" contentContainerStyle={{ paddingBottom: 40 }}>
-          <Text className="text-white text-base mb-2">You selected {movies.length} movie(s) for the vote.</Text>
+          <Text className="text-white text-base mb-2">
+            You selected {movies.length} movie(s) for the vote.
+          </Text>
 
           <View className="bg-dark-100 rounded-2xl p-4 mt-3">
             <Text className="text-white font-semibold mb-2">Duration (minutes)</Text>
@@ -269,7 +332,10 @@ export default function VotingScreen() {
               className="bg-dark-200 rounded-lg text-white px-3 py-2"
             />
 
-            <TouchableOpacity onPress={() => setAllowSkip(s => !s)} className="mt-4 flex-row items-center justify-between bg-dark-200 rounded-lg px-3 py-3">
+            <TouchableOpacity
+              onPress={() => setAllowSkip((s) => !s)}
+              className="mt-4 flex-row items-center justify-between bg-dark-200 rounded-lg px-3 py-3"
+            >
               <Text className="text-white">Allow skipping a card</Text>
               <View className={`w-5 h-5 rounded ${allowSkip ? "bg-accent" : "bg-light-200"}`} />
             </TouchableOpacity>
@@ -281,7 +347,7 @@ export default function VotingScreen() {
 
           <Text className="text-white font-semibold mt-6 mb-2">Preview</Text>
           <View className="flex-row flex-wrap gap-2">
-            {movies.slice(0, 9).map(m => (
+            {movies.slice(0, 9).map((m) => (
               <Image key={m.$id} source={{ uri: m.poster_url }} className="w-20 h-28 rounded-lg" resizeMode="cover" />
             ))}
           </View>
@@ -290,42 +356,42 @@ export default function VotingScreen() {
     );
   }
 
-  // results (after time ran out) — winner + scores + cleanup
-  if (session && timeLeftMs === 0) {
+  // results (closed session persists)
+  if (session && session.status === "closed") {
     return (
-      <View className="flex-1 bg-primary">
-        <Image source={images.bg} className="absolute w-full y-0" />
-        {Header}
 
-        <View className="px-5">
-          <Text className="text-white text-xl font-bold mb-3">Results</Text>
+        <ScrollView className="bg-primary" contentContainerStyle={{ paddingBottom: 55 }}>
+          <Image source={images.bg} className="absolute w-full y-0" />
+          {Header}
 
-          {winner?.poster_url ? (
-            <Image source={{ uri: winner.poster_url }} className="w-full h-72 rounded-2xl mb-3" resizeMode="cover" />
-          ) : null}
-          <Text className="text-white text-lg font-semibold mb-3">
-            {winner?.title ?? "No winner"}
-          </Text>
+          <View className="px-5">
+            <Text className="text-white text-xl font-bold mb-3">Results</Text>
 
-          <View className="bg-dark-100 rounded-2xl p-3 mb-4">
-            {movies.map(m => {
-              const s = resultScores?.[String(m.movie_id)];
-              return (
-                <View key={m.$id} className="flex-row items-center justify-between py-1">
-                  <Text className="text-white flex-1 pr-2" numberOfLines={1}>{m.title}</Text>
-                  <Text className="text-white">
-                    {s ? `+${s.likes} / -${s.dislikes} (${s.total})` : "0"}
-                  </Text>
-                </View>
-              );
-            })}
+            {winner?.poster_url ? (
+              <Image source={{ uri: winner.poster_url }} className="w-full h-72 rounded-2xl mb-3" resizeMode="cover" />
+            ) : null}
+            <Text className="text-white text-lg font-semibold mb-3">{winner?.title ?? "No winner"}</Text>
+
+            <View className="bg-dark-100 rounded-2xl p-3 mb-4">
+              {movies.map((m) => {
+                const s = resultScores?.[String(m.movie_id)];
+                return (
+                  <View key={m.$id} className="flex-row items-center justify-between py-1">
+                    <Text className="text-white flex-1 pr-2" numberOfLines={1}>
+                      {m.title}
+                    </Text>
+                    <Text className="text-white">{s ? `${s.total}` : "0"}</Text>
+                  </View>
+                );
+              })}
+            </View>
+
+            <TouchableOpacity onPress={onClearSession} className="bg-accent rounded-xl py-3 items-center">
+              <Text className="text-white font-semibold">Finish & Clear</Text>
+            </TouchableOpacity>
           </View>
+        </ScrollView>
 
-          <TouchableOpacity onPress={onClearSession} className="bg-accent rounded-xl py-3 items-center">
-            <Text className="text-white font-semibold">Clear session data</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
     );
   }
 
@@ -343,9 +409,11 @@ export default function VotingScreen() {
             <Text className="text-white font-bold">{timeLeftText}</Text>
           </View>
           <View className="bg-dark-100 rounded-2xl p-3">
-            {movies.map(m => (
+            {movies.map((m) => (
               <View key={m.$id} className="flex-row items-center justify-between py-1">
-                <Text className="text-white flex-1 pr-2" numberOfLines={1}>{m.title}</Text>
+                <Text className="text-white flex-1 pr-2" numberOfLines={1}>
+                  {m.title}
+                </Text>
                 <Text className="text-white">{scores[String(m.movie_id)] ?? 0}</Text>
               </View>
             ))}
@@ -358,9 +426,12 @@ export default function VotingScreen() {
               <Text className="text-white font-semibold">Time left</Text>
               <Text className="text-white font-bold">{timeLeftText}</Text>
             </View>
+            <TouchableOpacity onPress={onCloseNow} className="mt-2 self-start bg-light-200 px-3 py-1.5 rounded-lg">
+              <Text className="text-black font-semibold">Close now</Text>
+            </TouchableOpacity>
           </View>
 
-          <View className="flex-1 px-5">
+          <View className="flex-1">
             <Swiper
               ref={swiperRef}
               cards={movies}
@@ -373,14 +444,10 @@ export default function VotingScreen() {
               onSwipedTop={(i) => onSwipe(i, "top")}
               onSwipedAll={onSwipedAll}
               disableTopSwipe={!session?.allow_skip}
-              overlayLabels={{
-                left:  { title: "NOPE", style: { label: { color: "#ef4444", fontSize: 24, fontWeight: "700" } } },
-                right: { title: "LIKE", style: { label: { color: "#10b981", fontSize: 24, fontWeight: "700" } } },
-              }}
               renderCard={(m: WatchlistMovies | undefined) => {
                 if (!m) return <View className="bg-dark-100 rounded-2xl flex-1" />;
                 return (
-                  <View className="bg-dark-100 rounded-2xl flex-1 overflow-hidden">
+                  <View className="bg-dark-100 rounded-2xl overflow-hidden h-[55vh] w-full">
                     <Image source={{ uri: m.poster_url }} className="w-full h-full" resizeMode="cover" />
                     <View className="absolute bottom-0 left-0 right-0 p-3 bg-black/40">
                       <Text className="text-white font-bold text-lg">{m.title}</Text>
@@ -392,7 +459,7 @@ export default function VotingScreen() {
 
             <View className="flex-row justify-around mt-5">
               <TouchableOpacity onPress={() => swiperRef.current?.swipeLeft()} className="bg-red-600 px-6 py-3 rounded-full">
-                <Text className="text-white font-semibold">Nope</Text>
+                <Text className="text-white font-semibold">No</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => session?.allow_skip && swiperRef.current?.swipeTop()}
@@ -402,22 +469,12 @@ export default function VotingScreen() {
                 <Text className="text-black font-semibold">Skip</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => swiperRef.current?.swipeRight()} className="bg-emerald-500 px-6 py-3 rounded-full">
-                <Text className="text-white font-semibold">Like</Text>
+                <Text className="text-white font-semibold">Yes</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          <View className="px-5 pb-8 mt-4">
-            <Text className="text-white font-semibold mb-2">Current score</Text>
-            <View className="bg-dark-100 rounded-2xl p-3">
-              {movies.map(m => (
-                <View key={m.$id} className="flex-row items-center justify-between py-1">
-                  <Text className="text-white flex-1 pr-2" numberOfLines={1}>{m.title}</Text>
-                  <Text className="text-white">{scores[String(m.movie_id)] ?? 0}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
+        
         </>
       )}
     </View>
