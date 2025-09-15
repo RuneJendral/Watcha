@@ -1,4 +1,4 @@
-import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserFakeMailParams, CreateUserParams, CreateWatchlistResult, Movie, MovieDetails, SignInFakeMailParams, SignInParams, TrendingMovie, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
+import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserFakeMailParams, CreateUserParams, CreateWatchlistResult, Movie, MovieDetails, SignInFakeMailParams, SignInParams, TrendingMovie, VoteDoc, VoteValue, VotingSessionDoc, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
 import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
@@ -11,7 +11,8 @@ export const appwriteConfig = {
     watchlistCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_COLLECTION_ID!,
     watchlistMemberCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_MEMBERS_COLLECTION_ID!,
     watchlistMovieCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_MOVIES_COLLECTION_ID!,
-    watchlistVotingCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_VOTING_COLLECTION_ID!
+    watchlistVotingSessionCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_VOTING_SESSION_COLLECTION_ID!,
+    watchlistVoteCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_VOTES_COLLECTION_ID!
 }
 
 export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!).setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!).setPlatform(appwriteConfig.platform);
@@ -19,6 +20,7 @@ export const account = new Account(client);
 export const database = new Databases(client);
 export const avatars = new Avatars(client);
 const maximumWatchlistCreations  = 3;
+const nowIso = () => new Date().toISOString();
 
 export function slugifyUsername(raw: string) {
     return raw
@@ -795,4 +797,331 @@ export const removeMovieFromWatchlist = async (watchlistId: string, movieId: str
         console.log(error);
         throw error;
     }
+}
+
+async function getMyAccountId(): Promise<string> {
+  const acc = await account.get();
+  if (!acc?.$id) throw new Error("No user session");
+  return acc.$id;
+}
+
+export async function aggregateVotes(sessionId: string) {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [Query.equal("session_id", sessionId), Query.limit(10000)]
+  );
+  const scores: Record<string,{likes:number;dislikes:number;total:number}> = {};
+  for (const v of res.documents as unknown as VoteDoc[]) {
+    const k = String(v.movie_id);
+    if (!scores[k]) scores[k] = { likes: 0, dislikes: 0, total: 0 };
+    if (v.value === "like") scores[k].likes += 1;
+    else scores[k].dislikes += 1;
+    scores[k].total += 1;
+  }
+  return scores;
+}
+
+
+export async function getWatchlistMovieCard(movieId: string) {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistMovieCollectionId,
+    [Query.equal("movie_id", movieId), Query.limit(1)]
+  );
+  const doc = res.documents[0] as any;
+  if (!doc) return undefined;
+  return { title: doc.title as string, poster_url: doc.poster_url as string | undefined };
+}
+
+
+export async function getActiveSessionByWatchlist(
+  watchlistId: string
+): Promise<VotingSessionDoc | null> {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    [Query.equal("watchlist_id", watchlistId), Query.equal("status", "active")]
+  );
+  return res.total > 0 ? (res.documents[0] as unknown as VotingSessionDoc) : null;
+}
+
+export async function getLatestClosedSessionByWatchlist(
+  watchlistId: string
+): Promise<VotingSessionDoc | null> {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    [Query.equal("watchlist_id", watchlistId), Query.equal("status", "closed"), Query.orderDesc("$createdAt"), Query.limit(1)]
+  );
+  return res.total > 0 ? (res.documents[0] as unknown as VotingSessionDoc) : null;
+}
+
+export async function listVotesBySession(sessionId: string): Promise<VoteDoc[]> {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [Query.equal("session_id", sessionId), Query.limit(10000)]
+  );
+  return res.documents as unknown as VoteDoc[];
+}
+
+export async function deleteVotesForSession(sessionId: string) {
+  const votes = await listVotesBySession(sessionId);
+  await Promise.all(
+    votes.map((v) =>
+      database.deleteDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.watchlistVoteCollectionId,
+        v.$id
+      )
+    )
+  );
+}
+
+export async function deleteSession(sessionId: string) {
+  return database.deleteDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    sessionId
+  );
+}
+
+// compute scores and winner
+export function computeScores(votes: VoteDoc[]) {
+  const map = new Map<string, number>();
+  for (const v of votes) {
+    const inc = v.value === "like" ? 1 : 0; // dislikes don’t add points; change if you want −1
+    map.set(v.movie_id, (map.get(v.movie_id) || 0) + inc);
+  }
+  // to array
+  const scores = Array.from(map.entries()).map(([movieId, score]) => ({
+    movieId,
+    score,
+  }));
+  // find winner
+  const winner =
+    scores.length > 0
+      ? scores.reduce((a, b) => (b.score > a.score ? b : a))
+      : null;
+
+  return { scores, winner };
+}
+
+/**
+ * Finalize if needed and return results even if already closed.
+ * Returns {scores, winner, session} or null if nothing to show.
+ */
+export async function finalizeVotingIfNeeded(
+  watchlistId: string
+) {
+  // Prefer active (possibly expired), else latest closed
+  let session = await getActiveSessionByWatchlist(watchlistId);
+  if (!session) {
+    const closed = await getLatestClosedSessionByWatchlist(watchlistId);
+    if (!closed) return null;
+    session = closed;
+  }
+
+  const now = Date.now();
+  const endsAt = Date.parse(session.ends_at);
+
+  // If still active but expired -> close first
+  if (session.status === "active" && now >= endsAt) {
+    await closeVotingSession(session.$id);
+    session.status = "closed";
+  }
+
+  if (session.status !== "closed") {
+    // not finished yet → let UI continue to show swiper/countdown
+    return { status: "active", session };
+  }
+
+  const votes = await listVotesBySession(session.$id);
+  const { scores, winner } = computeScores(votes);
+
+  return {
+    status: "closed",
+    session,
+    scores,
+    winner, // {movieId, score} | null
+  };
+}
+
+// Return newest session for a watchlist (active OR closed)
+export async function getLatestVotingSession(watchlistId: string): Promise<VotingSessionDoc | undefined> {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    [Query.equal("watchlist_id", watchlistId), Query.orderDesc("$createdAt"), Query.limit(1)]
+  );
+  return (res.documents[0] as unknown) as VotingSessionDoc | undefined;
+}
+
+// Return newest ACTIVE session (or undefined)
+export async function getActiveVotingSession(watchlistId: string) {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    [Query.equal("watchlist_id", watchlistId), Query.equal("status", "active"), Query.orderDesc("$createdAt"), Query.limit(1)]
+  );
+  return (res.documents[0] as unknown) as VotingSessionDoc | undefined;
+}
+
+// Hard delete a session + all votes that belong to it
+export async function deleteVotingSessionCascade(sessionId: string) {
+  // delete votes
+  const votes = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [Query.equal("session_id", sessionId), Query.limit(200)]
+  );
+  for (const v of votes.documents) {
+    await database.deleteDocument(appwriteConfig.databaseId, appwriteConfig.watchlistVoteCollectionId, v.$id);
+  }
+  // delete session
+  await database.deleteDocument(appwriteConfig.databaseId, appwriteConfig.watchlistVotingSessionCollectionId, sessionId);
+}
+
+// Delete ALL sessions (any status) for a watchlist
+export async function deleteAllSessionsForWatchlist(watchlistId: string) {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    [Query.equal("watchlist_id", watchlistId), Query.limit(200)]
+  );
+  for (const s of res.documents as any[]) {
+    await deleteVotingSessionCascade(s.$id);
+  }
+}
+
+// Create new session (auto-clears previous ones first)
+export async function createVotingSession(
+  watchlistId: string,
+  movieIds: string[],
+  opts: { minutes: number; allowSkip?: boolean }
+): Promise<VotingSessionDoc> {
+  await deleteAllSessionsForWatchlist(watchlistId); // <— important
+  const ends = new Date(Date.now() + opts.minutes * 60 * 1000).toISOString();
+  const doc = await database.createDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    ID.unique(),
+    {
+      watchlist_id: watchlistId,
+      status: "active",
+      movie_ids: movieIds,
+      ends_at: ends,
+      allow_skip: !!opts.allowSkip,
+    }
+  );
+  return (doc as unknown) as VotingSessionDoc;
+}
+
+// Close a session (keep data for result viewing)
+export async function closeVotingSession(sessionId: string) {
+  await database.updateDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVotingSessionCollectionId,
+    sessionId,
+    { status: "closed" }
+  );
+}
+
+// Voting
+export async function castVote(sessionId: string, movieId: string, value: VoteValue) {
+  const userId = await getMyAccountId();
+
+  const existing = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [
+      Query.equal("session_id", sessionId),
+      Query.equal("movie_id", movieId),
+      Query.equal("user_id", userId),
+      Query.limit(1),
+    ]
+  );
+
+  if (existing.total > 0) {
+    const doc = existing.documents[0];
+    // nur ändern, wenn der Wert sich unterscheidet
+    if (doc.value !== value) {
+      await database.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.watchlistVoteCollectionId,
+        doc.$id,
+        { value }
+      );
+    }
+  } else {
+    await database.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.watchlistVoteCollectionId,
+      ID.unique(),
+      { session_id: sessionId, movie_id: movieId, user_id: userId, value }
+    );
+  }
+}
+
+export async function getUserVotesForSession(sessionId: string) {
+  const userId = await getMyAccountId();
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [
+      Query.equal("session_id", sessionId),
+      Query.equal("user_id", userId),
+      Query.limit(1000),
+    ]
+  );
+  return res.documents as any[];
+}
+
+export async function tallyVotes(sessionId: string): Promise<Record<string, number>> {
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [Query.equal("session_id", sessionId), Query.limit(200)]
+  );
+  const map: Record<string, number> = {};
+  for (const v of res.documents as any[]) {
+    const key = String(v.movie_id);
+    map[key] ??= 0;
+    map[key] += v.value === "like" ? 1 : -1;
+  }
+  return map;
+}
+
+export async function hasUserCompletedVoting(sessionId: string, movieIds: string[]) {
+  const myVotes = await getUserVotesForSession(sessionId);
+  const seen = new Set(myVotes.map((v: any) => String(v.movie_id)));
+  return movieIds.every((id) => seen.has(String(id)));
+}
+
+export async function getWinnerForSession(sessionId: string) {
+  const scores = await tallyVotes(sessionId);
+  let winnerId: string | undefined;
+  let best = -Infinity;
+  for (const [mid, score] of Object.entries(scores)) {
+    if (score > best) {
+      best = score;
+      winnerId = mid;
+    }
+  }
+  // optional: also compute likes/dislikes per movie for a richer result
+  const res = await database.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.watchlistVoteCollectionId,
+    [Query.equal("session_id", sessionId), Query.limit(1000)]
+  );
+  const breakdown: Record<string, { likes: number; dislikes: number; total: number }> = {};
+  for (const v of res.documents as any[]) {
+    const k = String(v.movie_id);
+    breakdown[k] ??= { likes: 0, dislikes: 0, total: 0 };
+    if (v.value === "like") breakdown[k].likes++;
+    else breakdown[k].dislikes++;
+    breakdown[k].total = breakdown[k].likes - breakdown[k].dislikes;
+  }
+  return { winnerId, scores: breakdown };
 }

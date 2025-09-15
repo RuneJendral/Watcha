@@ -3,6 +3,8 @@ import useAuthStore from "@/store/auth.store";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { StatusBar } from "react-native";
+import 'react-native-gesture-handler';
+import 'react-native-reanimated';
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./global.css";
 

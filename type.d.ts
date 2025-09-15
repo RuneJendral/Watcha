@@ -253,18 +253,34 @@ interface WatchlistMovies {
   onLongPress?: () => void;
 }
 
-type VoteValue = 1 | -1;
+export type VoteValue = "like" | "dislike";
 
-type VotingSession = Models.Document & {
+export interface VotingSessionDoc {
+  $id: string;
   watchlist_id: string;
-  status: "draft" | "active" | "closed";
-  movie_ids: string[];               // TMDB ids (number-like) or your internal ids
-  endsAt?: string;                   // ISO
-  votes?: Record<string, Record<string, VoteValue>>; // votes[userId][movie_id] = 1 | -1
-};
+  status: "active" | "closed" | "draft";
+  movie_ids: string[];
+  ends_at: string;            // ISO
+  allow_skip?: boolean;
+  $createdAt: string;
+  $updatedAt: string;
+}
 
-type WatchlistMovieDoc = Models.Document & {
-  movie_id: string;        // stored as string in your collection
-  title: string;
-  poster_url: string;
-};
+export interface VoteDoc {
+  $id: string;
+  session_id: string;
+  user_id: string;
+  movie_id: string;
+  value: "like" | "dislike";
+}
+
+type SwiperCardRefType =
+  | {
+      swipeRight: () => void;
+      swipeLeft: () => void;
+      swipeBack: () => void;
+      swipeTop: () => void;
+      swipeBottom: () => void;
+      flipCard: () => void;
+    }
+  | undefined;
