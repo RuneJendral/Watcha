@@ -1,6 +1,5 @@
 import MovieCard from "@/components/indexTabRelated/MovieCard";
 import TrendingCard from "@/components/indexTabRelated/TrendingCard";
-import { icons } from "@/constants/icons";
 import { images } from "@/constants/images";
 import { fetchMovies } from "@/services/api";
 import { getTrendingMovies } from "@/services/appwrite";
@@ -18,8 +17,7 @@ export default function Index() {
       <Image source={images.bg} className="absolute w-full y-0"/>
 
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
-        <Image source={icons.logo} className="w-10 h-10 mt-20 mx-auto"/>
-
+       
         {moviesLoading || trendingLoading ? (
           <ActivityIndicator
             size="large"

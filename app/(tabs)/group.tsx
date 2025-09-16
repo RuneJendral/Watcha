@@ -1,7 +1,6 @@
 
 import CreateWatchlistCard from '@/components/groupTabRelated/CreateWatchlistCard'
 import WatchlistCard from '@/components/groupTabRelated/WatchlistCard'
-import { icons } from '@/constants/icons'
 import { images } from '@/constants/images'
 import { deleteWatchlist, getUserWatchlists } from '@/services/appwrite'
 import useFetch from '@/services/useFetch'
@@ -82,8 +81,6 @@ const group = () => {
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}} refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff"/>
       }>
-        <Image source={icons.logo} className="w-10 h-10 mt-20 mx-auto"/>
-
         {watchlistsLoading ? (
           <ActivityIndicator
             size="large"

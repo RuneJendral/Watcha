@@ -58,10 +58,11 @@ const VotingScreen= () => {
     useState<Record<string, { likes: number; dislikes: number; total: number }> | null>(null);
 
   const swiperRef = useRef<SwiperCardRefType>(null);
-  
-  const { height } = Dimensions.get("window");
-  const SWIPER_HEIGHT = Math.min(480, Math.round(height * 0.55));
 
+  const { width } = Dimensions.get("window");
+  const CARD_W = Math.min(width * 0.9, 420);
+  const CARD_H = Math.round(CARD_W * 1.45); 
+  
   const filterMoviesFor = useCallback((all: WatchlistMovies[], ids: string[]) => {
     const set = new Set(ids.map(String));
     return all.filter((m) => set.has(String(m.movie_id)));
@@ -432,46 +433,72 @@ const VotingScreen= () => {
             </TouchableOpacity>
           </View>
 
-          <GestureHandlerRootView>
-          <View className="flex-1">
+          <GestureHandlerRootView className="flex-1 bg-black">
+      {/* Dem Swiper einen sichtbaren Frame geben */}
+      <View className="flex-1 items-center justify-center">
+        <View className="w-full items-center">
+          <View
+            // Wrapper mit fixer Höhe/Breite, damit die Karten sichtbar sind
+            className="w-full items-center"
+            style={{ height: CARD_H }}
+          >
             <Swiper
               ref={swiperRef}
               data={movies}
-              onSwipeLeft={(i) => onSwipe(i, "left")}
-              onSwipeRight={(i) => onSwipe(i, "right")}
-              onSwipeTop={(i) => onSwipe(i, "top")}
+              keyExtractor={(m: any) => String(m?.$id)}
+              onSwipeLeft={(i: number) => onSwipe(i, "left")}
+              onSwipeRight={(i: number) => onSwipe(i, "right")}
+              onSwipeTop={(i: number) => onSwipe(i, "top")}
               onSwipedAll={onSwipedAll}
               disableTopSwipe={!session?.allow_skip}
-              renderCard={(m: WatchlistMovies | undefined) => {
-                if (!m) return <View className="bg-dark-100 rounded-2xl flex-1" />;
+              cardStyle={{ width: CARD_W, height: CARD_H, borderRadius: 16, overflow: "hidden" }}
+              // renderCard bekommt i.d.R. `item` (und ggf. index) – je nach Lib-Version:
+              renderCard={(item: any /*, index?: number */) => {
+                if (!item) {
+                  return <View className="bg-dark-100 rounded-2xl flex-1" />;
+                }
                 return (
-                  <View className="bg-dark-100 rounded-2xl overflow-hidden h-[55vh] w-full">
-                    <Image source={{ uri: m.poster_url }} className="w-full h-full" resizeMode="cover" />
+                  <View className="bg-dark-100 rounded-2xl overflow-hidden h-full w-full">
+                    <Image
+                      source={{ uri: item.poster_url }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
                     <View className="absolute bottom-0 left-0 right-0 p-3 bg-black/40">
-                      <Text className="text-white font-bold text-lg">{m.title}</Text>
+                      <Text className="text-white font-bold text-lg">{item.title}</Text>
                     </View>
                   </View>
                 );
               }}
             />
-
-            <View className="flex-row justify-around mt-5">
-              <TouchableOpacity onPress={() => swiperRef.current?.swipeLeft()} className="bg-red-600 px-6 py-3 rounded-full">
-                <Text className="text-white font-semibold">No</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => session?.allow_skip && swiperRef.current?.swipeTop()}
-                disabled={!session?.allow_skip}
-                className={`px-6 py-3 rounded-full ${session?.allow_skip ? "bg-light-200" : "bg-light-200/40"}`}
-              >
-                <Text className="text-black font-semibold">Skip</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => swiperRef.current?.swipeRight()} className="bg-emerald-500 px-6 py-3 rounded-full">
-                <Text className="text-white font-semibold">Yes</Text>
-              </TouchableOpacity>
-            </View>
           </View>
-          </GestureHandlerRootView>
+        </View>
+
+        <View className="flex-row justify-around mt-5 w-full px-6">
+          <TouchableOpacity
+            onPress={() => swiperRef.current?.swipeLeft()}
+            className="bg-red-600 px-6 py-3 rounded-full"
+          >
+            <Text className="text-white font-semibold">No</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => session?.allow_skip && swiperRef.current?.swipeTop()}
+            disabled={!session?.allow_skip}
+            className={`px-6 py-3 rounded-full ${session?.allow_skip ? "bg-light-200" : "bg-light-200/40"}`}
+          >
+            <Text className="text-black font-semibold">Skip</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => swiperRef.current?.swipeRight()}
+            className="bg-emerald-500 px-6 py-3 rounded-full"
+          >
+            <Text className="text-white font-semibold">Yes</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </GestureHandlerRootView>
         
         </>
       )}
