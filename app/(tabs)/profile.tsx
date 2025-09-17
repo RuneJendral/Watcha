@@ -1,10 +1,11 @@
 import { icons } from '@/constants/icons'
+import { images } from '@/constants/images'
 import { logOut } from '@/services/appwrite'
 import useAuthStore from '@/store/auth.store'
 import { SettingsItemProps } from '@/type'
 import { Link, router } from 'expo-router'
 import React, { useState } from 'react'
-import { Alert, Image, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
 const profile = () => {
 
@@ -45,11 +46,12 @@ const profile = () => {
 
 
   return (
-    <SafeAreaView className="h-full bg-primary">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-32 px-7">
-        
+    <View className="h-full bg-primary">
+      <Image source={images.bg} className="flex-1 absolute w-full z-0" resizeMode="cover"/>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-32 px-7 my-5">
+
         <View className="flex flex-row items-center justify-between mt-10">
-          <Text className="text-xl font-bold text-white">Profile</Text>
+          <Text className="text-lg font-bold text-white">Profile</Text>
         </View>
 
         <View className="flex-row justify-center flex mt-5">
@@ -68,7 +70,7 @@ const profile = () => {
           <SettingsItem icon={icons.logout} title="Logout" textStyle="text-danger" onPress={handleLogout} showArrow={false}/>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 

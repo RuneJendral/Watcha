@@ -273,3 +273,14 @@ export interface VoteDoc {
   movie_id: string;
   value: "like" | "dislike";
 }
+
+type SwiperCardRefType =
+  | {
+      swipeRight: () => void;
+      swipeLeft: () => void;
+      swipeBack: () => void;
+      swipeTop: () => void;
+      swipeBottom: () => void;
+      flipCard: () => void;
+    }
+  | undefined;

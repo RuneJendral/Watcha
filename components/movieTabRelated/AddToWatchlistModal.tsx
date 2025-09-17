@@ -1,7 +1,7 @@
 import { addMovieToWatchlist, getUserWatchlists, getWatchlistName } from '@/services/appwrite';
 import { AddToWatchlistProps, Watchlist } from '@/type';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, Pressable, SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import DialogModal from '../basicModals/DialogModal';
 
 const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, onSelectWatchlist, movie }) => {
@@ -50,7 +50,7 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
   );
 
   return (
-    <SafeAreaView className="flex-1 justify-center items-center">
+    <View className="flex-1 justify-center items-center">
 
       <DialogModal
         text={confirmText}
@@ -80,7 +80,7 @@ const AddToWatchlistModal: React.FC<AddToWatchlistProps> = ({ visible, onClose, 
           </Pressable>
         </Pressable>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 

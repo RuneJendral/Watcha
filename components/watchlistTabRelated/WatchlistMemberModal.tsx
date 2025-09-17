@@ -1,7 +1,7 @@
 import { addUserToWatchlistWithUserName, getWatchlistMembers } from '@/services/appwrite';
 import { ManageMembersProps, WatchlistMember } from '@/type';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, SafeAreaView, Text, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import DialogModal from '../basicModals/DialogModal';
 import CustomButton from '../CustomButton';
 import CustomInput from '../CustomInput';
@@ -78,7 +78,7 @@ const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchli
   );
 
   return (
-    <SafeAreaView className="flex-1 justify-center items-center">
+    <View className="flex-1 justify-center items-center">
 
     <DialogModal
       text={confirmText}
@@ -124,7 +124,7 @@ const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchli
         </Pressable>
       </Pressable>
     </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 

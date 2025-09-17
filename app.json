@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.runejendral.Watcha",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -21,7 +21,6 @@
       "package": "com.runejendral.Watcha"
     },
     "web": {
-      "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/logo.png"
     },
@@ -32,12 +31,17 @@
         {
           "image": "./assets/images/adaptive-icon.png",
           "imageWidth": 200,
-          "backgroundColor": "#212121"
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
         }
       ]
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "reactCompiler": true
     },
     "extra": {
       "router": {},

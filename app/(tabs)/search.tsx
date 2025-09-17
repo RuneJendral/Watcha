@@ -1,6 +1,5 @@
 import MovieCard from "@/components/indexTabRelated/MovieCard";
 import SearchBar from "@/components/searchTabRelated/SearchBar";
-import { icons } from "@/constants/icons";
 import { images } from "@/constants/images";
 import { fetchMovies } from "@/services/api";
 import { updateSearchCount } from "@/services/appwrite";
@@ -12,7 +11,6 @@ const search = () => {
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [searchQuery, setSearchQuery] = useState('');
-
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const{data: movies, loading, error, refetch: loadMovies, reset} = useFetch(() => fetchMovies({
@@ -30,7 +28,6 @@ const search = () => {
     <View className="flex-1 bg-primary">
       <Image source={images.bg} className="flex-1 absolute w-full z-0" resizeMode="cover"/>
 
-
       <FlatList 
         data={Array.isArray(movies) ? movies : []} 
         renderItem={({ item }) => <MovieCard {... item}></MovieCard>}
@@ -45,11 +42,11 @@ const search = () => {
         contentContainerStyle={{ paddingBottom: 100}}
         ListHeaderComponent={
           <>
-            <View className="w-full flex-row justify-center mt-20 mb-5 items-center">
-              <Image source={icons.logo} className="w-10 h-10"/>
-            </View>
-
             <View className="my-5">
+              <View className="mt-10">
+                  <Text className="text-lg text-white font-bold mb-3">Movie Search</Text>
+              </View>
+
               <SearchBar placeholder="Search movies ..." value={searchQuery} onChangeText={(text: string) => setSearchQuery(text)} onSubmit={() => {
                   if (searchQuery.trim()) {
                     loadMovies();
