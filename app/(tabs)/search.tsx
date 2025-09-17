@@ -12,7 +12,6 @@ const search = () => {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [searchQuery, setSearchQuery] = useState('');
 
-
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const{data: movies, loading, error, refetch: loadMovies, reset} = useFetch(() => fetchMovies({
     query: searchQuery}, 
@@ -28,7 +27,6 @@ const search = () => {
   return (
     <View className="flex-1 bg-primary">
       <Image source={images.bg} className="flex-1 absolute w-full z-0" resizeMode="cover"/>
-
 
       <FlatList 
         data={Array.isArray(movies) ? movies : []} 
@@ -46,7 +44,7 @@ const search = () => {
           <>
             <View className="my-5">
               <View className="mt-10">
-                <Text className="text-lg text-white font-bold mb-3">Search</Text>
+                  <Text className="text-lg text-white font-bold mb-3">Movie Search</Text>
               </View>
 
               <SearchBar placeholder="Search movies ..." value={searchQuery} onChangeText={(text: string) => setSearchQuery(text)} onSubmit={() => {

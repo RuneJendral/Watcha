@@ -34,8 +34,10 @@ const group = () => {
     : [])
   ];
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [refreshing, setRefreshing] = useState(false);
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {

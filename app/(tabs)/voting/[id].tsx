@@ -254,11 +254,6 @@ const VotingScreen= () => {
       <View className="px-5 pt-20 mb-3">
         <View className="flex-row items-center justify-between">
           <Text className="text-lg text-white font-bold">Voting</Text>
-          {session?.status === "closed" ? (
-            <TouchableOpacity onPress={onClearSession} className="bg-accent px-3 py-1.5 rounded-lg">
-              <Text className="text-white font-semibold">Finish & Clear</Text>
-            </TouchableOpacity>
-          ) : null}
         </View>
       </View>
     ),
@@ -302,7 +297,7 @@ const VotingScreen= () => {
         {Header}
         <View className="px-5">
           <Text className="text-white text-base">
-            No active voting. Select movies in the watchlist first, then open this tab to configure and start a session.
+            No active voting. Select movies in the watchlist first, then click on Start Voting to start a session.
           </Text>
         </View>
       </View>
@@ -362,7 +357,7 @@ const VotingScreen= () => {
   if (session && session.status === "closed") {
     return (
 
-        <ScrollView className="bg-primary" contentContainerStyle={{ paddingBottom: 55 }}>
+        <ScrollView className="bg-primary" contentContainerStyle={{ paddingBottom: 110 }}>
           <Image source={images.bg} className="absolute w-full y-0" />
           {Header}
 
@@ -404,12 +399,15 @@ const VotingScreen= () => {
       {Header}
 
       {finished ? (
-        <View className="px-5">
+        <ScrollView className="px-5" contentContainerStyle={{ paddingBottom: 110 }}>
           <Text className="text-white text-base mb-2">Thanks! You’ve voted.</Text>
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-white font-semibold">Time left</Text>
             <Text className="text-white font-bold">{timeLeftText}</Text>
           </View>
+          <TouchableOpacity onPress={onCloseNow} className="mb-3 self-start bg-light-200 px-3 py-1.5 rounded-lg">
+            <Text className="text-black font-semibold">Close Voting</Text>
+          </TouchableOpacity>
           <View className="bg-dark-100 rounded-2xl p-3">
             {movies.map((m) => (
               <View key={m.$id} className="flex-row items-center justify-between py-1">
@@ -420,7 +418,7 @@ const VotingScreen= () => {
               </View>
             ))}
           </View>
-        </View>
+        </ScrollView>
       ) : (
         <>
           <View className="px-5 mb-3">
@@ -429,7 +427,7 @@ const VotingScreen= () => {
               <Text className="text-white font-bold">{timeLeftText}</Text>
             </View>
             <TouchableOpacity onPress={onCloseNow} className="mt-2 self-start bg-light-200 px-3 py-1.5 rounded-lg">
-              <Text className="text-black font-semibold">Close now</Text>
+              <Text className="text-black font-semibold">Close Voting</Text>
             </TouchableOpacity>
           </View>
 
@@ -448,12 +446,13 @@ const VotingScreen= () => {
               keyExtractor={(m: any) => String(m?.$id)}
               onSwipeLeft={(i: number) => onSwipe(i, "left")}
               onSwipeRight={(i: number) => onSwipe(i, "right")}
-              onSwipeTop={(i: number) => onSwipe(i, "top")}
+              onSwipeTop={() => onSwipe(0, "top")}
+              onSwipeBottom={() => onSwipe(0, "top")}
               onSwipedAll={onSwipedAll}
               disableTopSwipe={!session?.allow_skip}
+              disableBottomSwipe={!session?.allow_skip}
               cardStyle={{ width: CARD_W, height: CARD_H, borderRadius: 16, overflow: "hidden" }}
-              // renderCard bekommt i.d.R. `item` (und ggf. index) – je nach Lib-Version:
-              renderCard={(item: any /*, index?: number */) => {
+              renderCard={(item: any) => {
                 if (!item) {
                   return <View className="bg-dark-100 rounded-2xl flex-1" />;
                 }

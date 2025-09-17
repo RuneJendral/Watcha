@@ -1,4 +1,5 @@
 import { icons } from '@/constants/icons'
+import { images } from '@/constants/images'
 import { logOut } from '@/services/appwrite'
 import useAuthStore from '@/store/auth.store'
 import { SettingsItemProps } from '@/type'
@@ -46,10 +47,11 @@ const profile = () => {
 
   return (
     <SafeAreaView className="h-full bg-primary">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-32 px-7">
-        
+      <Image source={images.bg} className="flex-1 absolute w-full z-0" resizeMode="cover"/>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-32 px-7 my-5">
+
         <View className="flex flex-row items-center justify-between mt-10">
-          <Text className="text-xl font-bold text-white">Profile</Text>
+          <Text className="text-lg font-bold text-white">Profile</Text>
         </View>
 
         <View className="flex-row justify-center flex mt-5">
