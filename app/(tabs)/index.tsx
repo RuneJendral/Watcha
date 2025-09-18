@@ -19,12 +19,12 @@ export default function Index() {
 
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
 
-          <View className="mt-12 flex-row items-center">
+          <View className="mt-14 flex-row items-center">
             <Text className="text-3xl text-white font-bold mr-2">Watcha</Text>
             <Image source={icons.logo} className="w-8 h-8" resizeMode="contain" />
           </View>
 
-          <View className="flex-1">
+          <View className="flex-1 mt-10">
              <>
               {trendingMovies && (
                 <View className="mt-5">

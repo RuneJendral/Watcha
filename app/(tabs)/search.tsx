@@ -47,14 +47,16 @@ const search = () => {
                   <Text className="text-lg text-white font-bold mb-3">Movie Search</Text>
               </View>
 
-              <SearchBar placeholder="Search movies ..." value={searchQuery} onChangeText={(text: string) => setSearchQuery(text)} onSubmit={() => {
-                  if (searchQuery.trim()) {
-                    loadMovies();
-                  } else {
-                    reset();
-                  }
-                }}
-              />
+              <View className="mt-10">
+                <SearchBar placeholder="Search movies ..." value={searchQuery} onChangeText={(text: string) => setSearchQuery(text)} onSubmit={() => {
+                    if (searchQuery.trim()) {
+                      loadMovies();
+                    } else {
+                      reset();
+                    }
+                  }}
+                />
+              </View>
             </View>
 
             {loading && (<ActivityIndicator size="large" color="#0000ff" className="my-3"></ActivityIndicator>)}

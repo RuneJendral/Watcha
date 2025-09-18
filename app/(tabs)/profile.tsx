@@ -30,19 +30,18 @@ const profile = () => {
       }
   }
 
-  const SettingsItem = ({icon, title, onPress, textStyle, showArrow = true, path="./settings/changeName"}: SettingsItemProps) => (
-    <Link href={path} asChild>
-      <TouchableOpacity onPress={onPress} className="flex flex-row items-center justify-between py-3">
-        <View className="flex flex-row items-center gap-3">
-          <Image source={icon} className="size-6"/>
-          <Text className={`text-lg font-medium ${textStyle}`}>{title}</Text>
-        </View>
-
-        {showArrow && <Image source={icons.rightArrow} className="size-5" />}
-
-      </TouchableOpacity>
-    </Link>
-  )
+const SettingsItem = ({ icon, title, onPress, textStyle, showArrow = true, path }: SettingsItemProps) => {
+  const Content = (
+    <TouchableOpacity onPress={onPress} className="flex flex-row items-center justify-between py-3">
+      <View className="flex flex-row items-center gap-3">
+        <Image source={icon} className="size-6" />
+        <Text className={`text-lg font-medium ${textStyle}`}>{title}</Text>
+      </View>
+      {showArrow && <Image source={icons.rightArrow} className="size-5" />}
+    </TouchableOpacity>
+  );
+  return path ? <Link href={path} asChild>{Content}</Link> : Content;
+};
 
 
   return (
@@ -54,7 +53,7 @@ const profile = () => {
           <Text className="text-lg font-bold text-white">Profile</Text>
         </View>
 
-        <View className="flex-row justify-center flex mt-5">
+        <View className="flex-row justify-center flex mt-10">
           <View className="flex flex-col items-center relative mt-5">
             <Image source={{uri: avatarUrl}} className="size-44 relative rounded-full"/>
             <Text className="text-2xl font-bold mt-2 text-white">{user?.name}</Text>
@@ -62,12 +61,12 @@ const profile = () => {
         </View>
 
         <View className="flex flex-col mt-10 border-t pt-5 border-light-300">
-          <SettingsItem icon={icons.user} title="User Name" textStyle="text-light-300" path="../settings/changeName"/>
-          <SettingsItem icon={icons.lock} title="Password" textStyle="text-light-300" path="../settings/changePassword"/>
+          <SettingsItem icon={icons.user}  title="User Name" textStyle="text-light-300" path="../settings/changeName" />
+          <SettingsItem icon={icons.lock}  title="Password" textStyle="text-light-300" path="../settings/changePassword" />
         </View>
 
         <View className="flex flex-col mt-5 border-t pt-5 border-light-300">
-          <SettingsItem icon={icons.logout} title="Logout" textStyle="text-danger" onPress={handleLogout} showArrow={false}/>
+          <SettingsItem icon={icons.logout} title="Logout" textStyle="text-danger" onPress={handleLogout} showArrow={false} />
         </View>
       </ScrollView>
     </View>

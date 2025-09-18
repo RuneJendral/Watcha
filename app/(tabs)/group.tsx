@@ -100,53 +100,55 @@ const group = () => {
               </View>
             )}
 
-            {selectionMode && (
-              <View className="my-4">
-                <TouchableOpacity
-                  className="bg-red-600 py-2 rounded-xl items-center"
-                  onPress={handleDeleteSelected} 
-                >
-                  <Text className="text-white font-bold">Delete {selectedWatchlists.length} Watchlists</Text>
-                </TouchableOpacity>
+            <View className="mt-10">
+              {selectionMode && (
+                <View className="my-4">
+                  <TouchableOpacity
+                    className="bg-red-600 py-2 rounded-xl items-center"
+                    onPress={handleDeleteSelected} 
+                  >
+                    <Text className="text-white font-bold">Delete {selectedWatchlists.length} Watchlists</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={clearSelection}
-                  className="mt-2 items-center"
-                >
-                  <Text className="text-white underline">Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+                  <TouchableOpacity
+                    onPress={clearSelection}
+                    className="mt-2 items-center"
+                  >
+                    <Text className="text-white underline">Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
 
-            <>
-              <FlatList 
-                data={extendedWatchlists}
-                renderItem={({ item }) => {
-                    if (item.type === 'create') {
-                      return <CreateWatchlistCard refetchWatchlists={refetchWatchlist} inSelectionMode={selectionMode}/>;
-                    }
+              <>
+                <FlatList 
+                  data={extendedWatchlists}
+                  renderItem={({ item }) => {
+                      if (item.type === 'create') {
+                        return <CreateWatchlistCard refetchWatchlists={refetchWatchlist} inSelectionMode={selectionMode}/>;
+                      }
 
-                    return (
-                      <WatchlistCard
-                        name={item.name}
-                        id={item.id}
-                        selected={selectedWatchlists.includes(item.id)}
-                        onLongPress={() => handleLongPress(item.id)}
-                        onPress={() =>
-                          selectionMode
-                            ? toggleSelection(item.id)
-                            : router.push(`/(tabs)/watchlists/${item.id}`)
-                        }
-                      />
-                    );
-                }}
-                keyExtractor={(item, index) => item.type === 'watchlist' ? item.id.toString() : `create-${index}`}
-                numColumns={2}
-                columnWrapperStyle={{justifyContent: 'flex-start', gap: 20, paddingRight: 5, marginBottom: 20}}
-                className="mt-2 pb-32"
-                scrollEnabled={false}>
-               </FlatList>
-            </>
+                      return (
+                        <WatchlistCard
+                          name={item.name}
+                          id={item.id}
+                          selected={selectedWatchlists.includes(item.id)}
+                          onLongPress={() => handleLongPress(item.id)}
+                          onPress={() =>
+                            selectionMode
+                              ? toggleSelection(item.id)
+                              : router.push(`/(tabs)/watchlists/${item.id}`)
+                          }
+                        />
+                      );
+                  }}
+                  keyExtractor={(item, index) => item.type === 'watchlist' ? item.id.toString() : `create-${index}`}
+                  numColumns={2}
+                  columnWrapperStyle={{justifyContent: 'flex-start', gap: 20, paddingRight: 5, marginBottom: 20}}
+                  className="mt-2 pb-32"
+                  scrollEnabled={false}>
+                </FlatList>
+              </>
+            </View>
           </View>
         )}
       </ScrollView>
