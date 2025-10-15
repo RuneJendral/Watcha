@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   BackHandler,
-  Dimensions,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +13,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Swiper, type SwiperCardRefType } from "rn-swiper-list";
@@ -32,6 +32,7 @@ import {
   tallyVotes,
 } from "@/services/appwrite";
 import type { VoteValue, VotingSessionDoc, WatchlistMovies } from "@/type";
+
 
 const like: VoteValue = "like";
 const dislike: VoteValue = "dislike";
@@ -59,9 +60,18 @@ const VotingScreen= () => {
 
   const swiperRef = useRef<SwiperCardRefType>(null);
 
-  const { width } = Dimensions.get("window");
-  const CARD_W = Math.min(width * 0.9, 420);
-  const CARD_H = Math.round(CARD_W * 1.45); 
+  const { width } = useWindowDimensions();
+  const [availH, setAvailH] = useState(0);
+
+  // Seiten-Padding (px) muss mit deinem Layout matchen (du nutzt oben px-5 -> ~20px)
+  const PADDING_X = 20;
+
+  // Kartenbreite: an Gerätegröße anpassen & deckeln
+  const CARD_W = Math.min(width - PADDING_X * 2, 480);
+  // gewünschtes ratio ~1.45 (wie bei dir)
+  const RATIO = 1.45;
+
+
   
   const filterMoviesFor = useCallback((all: WatchlistMovies[], ids: string[]) => {
     const set = new Set(ids.map(String));
@@ -231,7 +241,6 @@ const VotingScreen= () => {
     await computeResults(session.$id);
   };
 
-  // Nutzer-getrieben: Session + Votes löschen (persistente Ergebnisse verschwinden)
   const onClearSession = async () => {
     if (!session) return;
     try {
@@ -421,84 +430,58 @@ const VotingScreen= () => {
         </ScrollView>
       ) : (
         <>
-          <View className="px-5 mb-3">
+          <View className="px-5">
             <View className="flex-row items-center justify-between">
               <Text className="text-white font-semibold">Time left</Text>
               <Text className="text-white font-bold">{timeLeftText}</Text>
             </View>
-            <TouchableOpacity onPress={onCloseNow} className="mt-2 self-start bg-light-200 px-3 py-1.5 rounded-lg">
+            <TouchableOpacity onPress={onCloseNow} className="mt-2 mb-2 self-start bg-light-200 px-3 py-1.5 rounded-lg">
               <Text className="text-black font-semibold">Close Voting</Text>
             </TouchableOpacity>
           </View>
 
-          <GestureHandlerRootView className="flex-1 bg-black">
-      {/* Dem Swiper einen sichtbaren Frame geben */}
-      <View className="flex-1 items-center justify-center">
-        <View className="w-full items-center">
-          <View
-            // Wrapper mit fixer Höhe/Breite, damit die Karten sichtbar sind
-            className="w-full items-center"
-            style={{ height: CARD_H }}
-          >
-            <Swiper
-              ref={swiperRef}
-              data={movies}
-              keyExtractor={(m: any) => String(m?.$id)}
-              onSwipeLeft={(i: number) => onSwipe(i, "left")}
-              onSwipeRight={(i: number) => onSwipe(i, "right")}
-              onSwipeTop={() => onSwipe(0, "top")}
-              onSwipeBottom={() => onSwipe(0, "top")}
-              onSwipedAll={onSwipedAll}
-              disableTopSwipe={!session?.allow_skip}
-              disableBottomSwipe={!session?.allow_skip}
-              cardStyle={{ width: CARD_W, height: CARD_H, borderRadius: 16, overflow: "hidden" }}
-              renderCard={(item: any) => {
-                if (!item) {
-                  return <View className="bg-dark-100 rounded-2xl flex-1" />;
-                }
-                return (
-                  <View className="bg-dark-100 rounded-2xl overflow-hidden h-full w-full">
-                    <Image
-                      source={{ uri: item.poster_url }}
-                      className="w-full h-full"
-                      resizeMode="cover"
-                    />
-                    <View className="absolute bottom-0 left-0 right-0 p-3 bg-black/40">
-                      <Text className="text-white font-bold text-lg">{item.title}</Text>
+          <View className="flex-1 px-5" onLayout={(e) => setAvailH(e.nativeEvent.layout.height)}>
+            {availH > 0 && (
+              <GestureHandlerRootView className="flex-1">
+                {(() => {
+                  const CARD_H = Math.min(Math.max(availH - 12, 0), Math.round(CARD_W * RATIO));
+                  return (
+                    <View className="w-full items-center" style={{ height: CARD_H }}>
+                      <Swiper
+                        ref={swiperRef}
+                        data={movies}
+                        keyExtractor={(m: any) => String(m?.$id)}
+                        onSwipeLeft={(i: number) => onSwipe(i, "left")}
+                        onSwipeRight={(i: number) => onSwipe(i, "right")}
+                        onSwipeTop={() => onSwipe(0, "top")}
+                        onSwipeBottom={() => onSwipe(0, "top")}
+                        onSwipedAll={onSwipedAll}
+                        disableTopSwipe={!session?.allow_skip}
+                        disableBottomSwipe={!session?.allow_skip}
+                        cardStyle={{
+                          width: CARD_W,
+                          height: CARD_H,
+                          borderRadius: 16,
+                          overflow: "hidden",
+                        }}
+                        renderCard={(item: any) => {
+                          if (!item) return <View className="bg-dark-100 rounded-2xl flex-1" />;
+                          return (
+                            <View className="bg-dark-100 rounded-2xl overflow-hidden h-full w-full">
+                              <Image source={{ uri: item.poster_url }} className="w-full h-full" resizeMode="cover" />
+                              <View className="absolute bottom-0 left-0 right-0 p-3 bg-black/40">
+                                <Text className="text-white font-bold text-lg">{item.title}</Text>
+                              </View>
+                            </View>
+                          );
+                        }}
+                      />
                     </View>
-                  </View>
-                );
-              }}
-            />
+                  );
+                })()}
+              </GestureHandlerRootView>
+            )}
           </View>
-        </View>
-
-        <View className="flex-row justify-around mt-5 w-full px-6">
-          <TouchableOpacity
-            onPress={() => swiperRef.current?.swipeLeft()}
-            className="bg-red-600 px-6 py-3 rounded-full"
-          >
-            <Text className="text-white font-semibold">No</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => session?.allow_skip && swiperRef.current?.swipeTop()}
-            disabled={!session?.allow_skip}
-            className={`px-6 py-3 rounded-full ${session?.allow_skip ? "bg-light-200" : "bg-light-200/40"}`}
-          >
-            <Text className="text-black font-semibold">Skip</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => swiperRef.current?.swipeRight()}
-            className="bg-emerald-500 px-6 py-3 rounded-full"
-          >
-            <Text className="text-white font-semibold">Yes</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </GestureHandlerRootView>
-        
         </>
       )}
     </View>
