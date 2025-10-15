@@ -1,10 +1,8 @@
-// app/(tabs)/votingd/[id].tsx
 import { images } from "@/constants/images";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  BackHandler,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -63,12 +61,9 @@ const VotingScreen= () => {
   const { width } = useWindowDimensions();
   const [availH, setAvailH] = useState(0);
 
-  // Seiten-Padding (px) muss mit deinem Layout matchen (du nutzt oben px-5 -> ~20px)
   const PADDING_X = 20;
 
-  // Kartenbreite: an Gerätegröße anpassen & deckeln
   const CARD_W = Math.min(width - PADDING_X * 2, 480);
-  // gewünschtes ratio ~1.45 (wie bei dir)
   const RATIO = 1.45;
 
 
@@ -147,23 +142,14 @@ const VotingScreen= () => {
     load();
   }, [load]);
 
-  // Refresh beim Tab-Fokus
+  // Refresh 
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
   );
 
-  // Zurück-Button -> Watchlist
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
-      router.replace(`/watchlists/${id}`);
-      return true;
-    });
-    return () => backHandler.remove();
-  }, [id]);
-
-  // countdown tick (nur bei aktiver Session)
+  // countdown tick 
   useEffect(() => {
     if (!session || session.status !== "active") return;
     const t = setInterval(() => {
@@ -215,7 +201,6 @@ const VotingScreen= () => {
     try {
       setLoading(true);
       const mins = Math.max(1, parseInt(minutes || "15", 10));
-      // ⚠️ createVotingSession löscht alte Sessions für die Watchlist automatisch
       const s = await createVotingSession(
         id,
         movies.map((m) => String(m.movie_id)),
@@ -232,7 +217,6 @@ const VotingScreen= () => {
     }
   };
 
-  // manuell jetzt schließen (keine Löschung)
   const onCloseNow = async () => {
     if (!session || session.status !== "active") return;
     await closeVotingSession(session.$id);
