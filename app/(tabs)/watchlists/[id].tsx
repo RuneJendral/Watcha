@@ -10,7 +10,7 @@ import { WatchlistMovies } from '@/type';
 import { useFocusEffect } from '@react-navigation/native';
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
 
 
 const WatchlistCollection = () => {
@@ -151,25 +151,27 @@ const WatchlistCollection = () => {
         )}
       </View>
       
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}} refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff"/>
-      }>
+      <View className="flex-1 px-5">
         {watchlistLoading ? (
             <ActivityIndicator size="large" color="#0000ff" className="mt-10 self-center"/>
         ) : watchlistError ? (
           <Text>Error: {watchlistError?.message}</Text>
         ) : (
           <FlatList
-            scrollEnabled={false}
             data={watchlistMovies}
             numColumns={3}
             keyExtractor={(item) => item.$id}
             renderItem={renderMovie}
-            contentContainerStyle={{ paddingBottom: 20, paddingTop: 10, gap: 16 }}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingTop: 10, paddingBottom: 120, gap: 16 }}
             columnWrapperStyle={{justifyContent: 'flex-start', gap: 15, paddingRight: 5, marginBottom: 10,  marginLeft: 2,}}
-            className="pb-32 "
             ListHeaderComponent={
               <Text className="text-lg text-white font-bold mb-3 mt-10">Watchlist:</Text>
+            }
+            ListEmptyComponent={
+              <Text className="text-white opacity-70 mt-6">No movies yet.</Text>
             }
           />
         )}
@@ -193,7 +195,7 @@ const WatchlistCollection = () => {
           movies={watchlistMovies as WatchlistMovies[]}
         />
 
-      </ScrollView>
+      </View>
 
       {watchlistLoading && (
         <View className="absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-primary z-50">

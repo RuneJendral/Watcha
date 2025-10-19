@@ -330,10 +330,10 @@ export const getMoviesWatchlist = async (watchlist_id: string): Promise<Watchlis
         const watchlistMovies = await database.listDocuments(
             appwriteConfig.databaseId, 
             appwriteConfig.watchlistMovieCollectionId, 
-            [Query.equal('watchlist_ids', watchlist_id)]
+            [Query.equal('watchlist_ids', watchlist_id), Query.limit(50)] //save query limit as set value in user Profile
         );
 
-    return watchlistMovies.documents as unknown as WatchlistMovies[];
+        return watchlistMovies.documents as unknown as WatchlistMovies[];
     }   catch (error){
         console.log(error);
         return undefined;
