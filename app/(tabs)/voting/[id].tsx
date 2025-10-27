@@ -48,7 +48,7 @@ const VotingScreen= () => {
   // finished = current user has voted on all movies
   const [finished, setFinished] = useState(false);
   const [minutes, setMinutes] = useState("20");
-  const [allowSkip, setAllowSkip] = useState(true);
+  const [allowSkip, setAllowSkip] = useState(false);
   const [timeLeftMs, setTimeLeftMs] = useState(-1); // -1 = uninitialized
 
   // winner view
@@ -322,14 +322,6 @@ const VotingScreen= () => {
               className="bg-dark-200 rounded-lg text-white px-3 py-2"
             />
 
-            <TouchableOpacity
-              onPress={() => setAllowSkip((s) => !s)}
-              className="mt-4 flex-row items-center justify-between bg-dark-200 rounded-lg px-3 py-3"
-            >
-              <Text className="text-white">Allow skipping a card</Text>
-              <View className={`w-5 h-5 rounded ${allowSkip ? "bg-accent" : "bg-light-200"}`} />
-            </TouchableOpacity>
-
             <TouchableOpacity onPress={onStartVoting} className="mt-5 bg-accent rounded-xl py-3 items-center">
               <Text className="text-white font-semibold">Start voting</Text>
             </TouchableOpacity>
@@ -437,8 +429,6 @@ const VotingScreen= () => {
                         keyExtractor={(m: any) => String(m?.$id)}
                         onSwipeLeft={(i: number) => onSwipe(i, "left")}
                         onSwipeRight={(i: number) => onSwipe(i, "right")}
-                        onSwipeTop={() => onSwipe(0, "top")}
-                        onSwipeBottom={() => onSwipe(0, "top")}
                         onSwipedAll={onSwipedAll}
                         disableTopSwipe={!session?.allow_skip}
                         disableBottomSwipe={!session?.allow_skip}
