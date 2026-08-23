@@ -1,74 +1,127 @@
-import { icons } from '@/constants/icons'
-import { images } from '@/constants/images'
-import { logOut, resizedAvatarUrl } from '@/services/appwrite'
-import useAuthStore from '@/store/auth.store'
-import { SettingsItemProps } from '@/type'
-import { Link, router } from 'expo-router'
-import React, { useState } from 'react'
-import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { icons } from "@/constants/icons";
+import { images } from "@/constants/images";
+import { logOut, resizedAvatarUrl } from "@/services/appwrite";
+import useAuthStore from "@/store/auth.store";
+import { SettingsItemProps } from "@/type";
+import { Link, router } from "expo-router";
+import React, { useState } from "react";
+import {
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const Profile = () => {
-
-  const {user} = useAuthStore();
-  const avatarUrl = resizedAvatarUrl(user?.avatar ?? '', 500);
+  const { user } = useAuthStore();
+  const avatarUrl = resizedAvatarUrl(user?.avatar ?? "", 500);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogout = async () => {
-      try{
-          await logOut();
-          useAuthStore.getState().setIsAuthenticated(false);
-          useAuthStore.getState().setUser(null); 
-          router.replace('/sign-in');
-      } catch(error: any){
-          Alert.alert('Error', error.message);
-      } finally {
-          setIsSubmitting(false);
-      }
-  }
+    try {
+      await logOut();
+      useAuthStore.getState().setIsAuthenticated(false);
+      useAuthStore.getState().setUser(null);
+      router.replace("/sign-in");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-const SettingsItem = ({ icon, title, onPress, textStyle, showArrow = true, path }: SettingsItemProps) => {
-  const Content = (
-    <TouchableOpacity onPress={onPress} className="flex flex-row items-center justify-between py-3">
-      <View className="flex flex-row items-center gap-3">
-        <Image source={icon} className="size-6" />
-        <Text className={`text-lg font-medium ${textStyle}`}>{title}</Text>
-      </View>
-      {showArrow && <Image source={icons.rightArrow} className="size-5" />}
-    </TouchableOpacity>
-  );
-  return path ? <Link href={path} asChild>{Content}</Link> : Content;
-};
-
+  const SettingsItem = ({
+    icon,
+    title,
+    onPress,
+    textStyle,
+    showArrow = true,
+    path,
+  }: SettingsItemProps) => {
+    const Content = (
+      <TouchableOpacity
+        onPress={onPress}
+        className="flex flex-row items-center justify-between py-3"
+      >
+        <View className="flex flex-row items-center gap-3">
+          <Image source={icon} className="size-6" />
+          <Text className={`text-lg font-medium ${textStyle}`}>{title}</Text>
+        </View>
+        {showArrow && <Image source={icons.rightArrow} className="size-5" />}
+      </TouchableOpacity>
+    );
+    return path ? (
+      <Link href={path} asChild>
+        {Content}
+      </Link>
+    ) : (
+      Content
+    );
+  };
 
   return (
     <View className="h-full bg-primary">
-      <Image source={images.bg} className="flex-1 absolute w-full z-0" resizeMode="cover"/>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-32 px-7 my-5">
-
+      <Image
+        source={images.bg}
+        className="flex-1 absolute w-full z-0"
+        resizeMode="cover"
+      />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerClassName="pb-32 px-7 my-5"
+      >
         <View className="flex flex-row items-center justify-between mt-10">
           <Text className="text-lg font-bold text-white">Profile</Text>
         </View>
 
         <View className="flex-row justify-center flex mt-10">
           <View className="flex flex-col items-center relative mt-5">
-            <Image source={{uri: avatarUrl}} className="size-44 relative rounded-full"/>
-            <Text className="text-2xl font-bold mt-2 text-white">{user?.name}</Text>
+            <Image
+              source={{ uri: avatarUrl }}
+              className="size-44 relative rounded-full"
+            />
+            <Text className="text-2xl font-bold mt-2 text-white">
+              {user?.name}
+            </Text>
           </View>
         </View>
 
         <View className="flex flex-col mt-10 border-t pt-5 border-light-300">
-          <SettingsItem icon={icons.user}  title="User Name" textStyle="text-light-300" path="../settings/changeName" />
-          <SettingsItem icon={icons.lock}  title="Password" textStyle="text-light-300" path="../settings/changePassword" />
+          <SettingsItem
+            icon={icons.user}
+            title="User Name"
+            textStyle="text-light-300"
+            path="../settings/changeName"
+          />
+          <SettingsItem
+            icon={icons.lock}
+            title="Password"
+            textStyle="text-light-300"
+            path="../settings/changePassword"
+          />
         </View>
 
         <View className="flex flex-col mt-5 border-t pt-5 border-light-300">
-          <SettingsItem icon={icons.logout} title="Logout" textStyle="text-danger" onPress={handleLogout} showArrow={false} />
-          <SettingsItem icon={icons.logout} title="Delete Account" textStyle="text-danger" path="../settings/deleteAccount" />
+          <SettingsItem
+            icon={icons.logout}
+            title="Logout"
+            textStyle="text-danger"
+            onPress={handleLogout}
+            showArrow={false}
+          />
+          <SettingsItem
+            icon={icons.trash}
+            title="Delete Account"
+            textStyle="text-danger"
+            path="../settings/deleteAccount"
+          />
         </View>
       </ScrollView>
     </View>
-  )
-}
+  );
+};
 
-export default Profile
+export default Profile;

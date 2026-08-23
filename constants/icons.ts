@@ -18,6 +18,7 @@ import rightArrow from "@/assets/icons/right-arrow.png";
 import search from "@/assets/icons/search.png";
 import searchHighlight from "@/assets/icons/searchHighlight.png";
 import star from "@/assets/icons/star.png";
+import trash from "@/assets/icons/trash.png";
 import user from "@/assets/icons/user.png";
 import voting from "@/assets/icons/voting.png";
 
@@ -44,4 +45,5 @@ export const icons = {
   add,
   dice,
   voting,
+  trash,
 };
