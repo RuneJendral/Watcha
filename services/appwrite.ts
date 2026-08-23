@@ -1,5 +1,5 @@
 import { ChangeMailParams, ChangeNameParams, ChangePasswordParams, CreateUserFakeMailParams, CreateUserParams, CreateWatchlistResult, Movie, MovieDetails, SignInFakeMailParams, SignInParams, TrendingMovie, VoteDoc, VoteValue, VotingSessionDoc, Watchlist, WatchlistMember, WatchlistMovies } from '@/type';
-import { Account, Avatars, Client, Databases, ID, Query } from "react-native-appwrite";
+import { Account, Avatars, Client, Databases, Functions, ID, Query } from "react-native-appwrite";
 
 export const appwriteConfig = {
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!,
@@ -12,13 +12,15 @@ export const appwriteConfig = {
     watchlistMemberCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_MEMBERS_COLLECTION_ID!,
     watchlistMovieCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_MOVIES_COLLECTION_ID!,
     watchlistVotingSessionCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_VOTING_SESSION_COLLECTION_ID!,
-    watchlistVoteCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_VOTES_COLLECTION_ID!
+    watchlistVoteCollectionId: process.env.EXPO_PUBLIC_APPWRITE_WATCHLIST_VOTES_COLLECTION_ID!,
+    deleteAccountFunctionId: process.env.EXPO_PUBLIC_APPWRITE_DELETE_ACCOUNT_FUNCTION_ID!,
 }
 
 export const client = new Client().setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!).setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!).setPlatform(appwriteConfig.platform);
 export const account = new Account(client);
 export const database = new Databases(client);
 export const avatars = new Avatars(client);
+export const functions = new Functions(client);
 const maximumWatchlistCreations  = 3;
 const nowIso = () => new Date().toISOString();
 
@@ -170,6 +172,24 @@ export const signInWithFakeMail = async ({name, password}: SignInFakeMailParams)
 export const logOut = async () => {
     try {
         await account.deleteSessions();
+    } catch (e) {
+        throw normalizeError(e);
+    }
+}
+
+// Permanently deletes the current user's account, watchlist memberships, and votes.
+// Runs server-side (see functions/delete-account) since the client SDK has no
+// permission to delete an Appwrite account or auth session on its own.
+export const deleteAccount = async () => {
+    try {
+        const execution = await functions.createExecution(appwriteConfig.deleteAccountFunctionId);
+
+        let body: any = {};
+        try { body = JSON.parse(execution.responseBody || "{}"); } catch {}
+
+        if (execution.responseStatusCode >= 400 || body.ok === false) {
+            throw new Error(body.message || "Failed to delete account.");
+        }
     } catch (e) {
         throw normalizeError(e);
     }

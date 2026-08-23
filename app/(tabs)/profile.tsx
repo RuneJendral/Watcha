@@ -64,6 +64,7 @@ const SettingsItem = ({ icon, title, onPress, textStyle, showArrow = true, path 
 
         <View className="flex flex-col mt-5 border-t pt-5 border-light-300">
           <SettingsItem icon={icons.logout} title="Logout" textStyle="text-danger" onPress={handleLogout} showArrow={false} />
+          <SettingsItem icon={icons.logout} title="Delete Account" textStyle="text-danger" path="../settings/deleteAccount" />
         </View>
       </ScrollView>
     </View>
