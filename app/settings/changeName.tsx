@@ -56,8 +56,7 @@ const ChangeNameSetting = () => {
                 placeholder="Enter your new User-Name" 
                 value={form.name} 
                 onChangeText={(text) => setForm((prev) => ({ ...prev, name: text}))} 
-                label="new User-Name" 
-                keyboardType="email-address"
+                label="new User-Name"
             />
 
             <CustomButton 

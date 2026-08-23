@@ -50,8 +50,7 @@ const SignIn = () => {
                 placeholder="Enter your Username" 
                 value={form.name} 
                 onChangeText={(text) => setForm((prev) => ({ ...prev, name: text}))} 
-                label="Username" 
-                keyboardType="email-address"
+                label="Username"
             />
 
             <CustomInput 

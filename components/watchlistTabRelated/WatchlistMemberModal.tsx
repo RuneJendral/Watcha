@@ -95,8 +95,7 @@ const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchli
                   placeholder="username" 
                   value={form.username} 
                   onChangeText={(text) => setForm((prev) => ({ ...prev, username: text}))} 
-                  label="Add Member" 
-                  keyboardType="email-address"
+                  label="Add Member"
               />
 
               <CustomButton 

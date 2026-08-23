@@ -63,11 +63,6 @@ interface ChangeNameParams {
     name: string;
 }
 
-interface ChangeMailParams {
-    email: string;
-    password: string;
-}
-
 interface ChangePasswordParams {
     newPassword: string;
     oldPassword: string;
@@ -263,14 +258,6 @@ export interface VotingSessionDoc {
   ends_at: string;            // ISO
   $createdAt: string;
   $updatedAt: string;
-}
-
-export interface VoteDoc {
-  $id: string;
-  session_id: string;
-  user_id: string;
-  movie_id: string;
-  value: "like" | "dislike";
 }
 
 type SwiperCardRefType =
