@@ -48,7 +48,6 @@ const VotingScreen= () => {
   // finished = current user has voted on all movies
   const [finished, setFinished] = useState(false);
   const [minutes, setMinutes] = useState("20");
-  const [allowSkip, setAllowSkip] = useState(false);
   const [timeLeftMs, setTimeLeftMs] = useState(-1); // -1 = uninitialized
   const [voteError, setVoteError] = useState<string | null>(null);
 
@@ -175,7 +174,7 @@ const VotingScreen= () => {
   }, [timeLeftMs, session?.$id, session?.ends_at, session?.status, computeResults]);
 
   // ---------- actions ----------
-  const onSwipe = async (index: number, dir: "left" | "right" | "top") => {
+  const onSwipe = async (index: number, dir: "left" | "right") => {
     if (!session || session.status !== "active" || finished) return;
     const movie = movies[index];
     if (!movie) return;
@@ -209,7 +208,7 @@ const VotingScreen= () => {
       const s = await createVotingSession(
         id,
         movies.map((m) => String(m.movie_id)),
-        { minutes: mins, allowSkip }
+        { minutes: mins }
       );
       setSession(s);
       setFinished(false);
@@ -436,8 +435,8 @@ const VotingScreen= () => {
                         onSwipeLeft={(i: number) => onSwipe(i, "left")}
                         onSwipeRight={(i: number) => onSwipe(i, "right")}
                         onSwipedAll={onSwipedAll}
-                        disableTopSwipe={!session?.allow_skip}
-                        disableBottomSwipe={!session?.allow_skip}
+                        disableTopSwipe={true}
+                        disableBottomSwipe={true}
                         cardStyle={{
                           width: CARD_W,
                           height: CARD_H,

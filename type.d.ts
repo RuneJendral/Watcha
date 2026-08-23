@@ -261,7 +261,6 @@ export interface VotingSessionDoc {
   status: "active" | "closed" | "draft";
   movie_ids: string[];
   ends_at: string;            // ISO
-  allow_skip?: boolean;
   $createdAt: string;
   $updatedAt: string;
 }

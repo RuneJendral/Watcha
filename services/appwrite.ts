@@ -1046,7 +1046,7 @@ export async function deleteAllSessionsForWatchlist(watchlistId: string) {
 export async function createVotingSession(
   watchlistId: string,
   movieIds: string[],
-  opts: { minutes: number; allowSkip?: boolean }
+  opts: { minutes: number }
 ): Promise<VotingSessionDoc> {
   await deleteAllSessionsForWatchlist(watchlistId); // <— important
   const ends = new Date(Date.now() + opts.minutes * 60 * 1000).toISOString();
@@ -1059,7 +1059,6 @@ export async function createVotingSession(
       status: "active",
       movie_ids: movieIds,
       ends_at: ends,
-      allow_skip: !!opts.allowSkip,
     }
   );
   return (doc as unknown) as VotingSessionDoc;
