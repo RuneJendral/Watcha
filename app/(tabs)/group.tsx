@@ -9,18 +9,15 @@ import { router } from 'expo-router'
 import React, { useCallback, useState } from 'react'
 import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
-const group = () => {
+const Group = () => {
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [selectedWatchlists, setSelectedWatchlists] = useState<string[]>([]);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [selectionMode, setSelectionMode] = useState(false);
 
   type WatchlistItem = 
   | { type: 'create' }
   | (WatchlistProps & { type: 'watchlist' });
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const {data: watchlists, loading: watchlistsLoading, error: watchlistsError, refetch: refetchWatchlist} = useFetch(getUserWatchlists, true, []);
 
   const extendedWatchlists: WatchlistItem[] = [
@@ -34,10 +31,8 @@ const group = () => {
     : [])
   ];
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [refreshing, setRefreshing] = useState(false);
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -156,4 +151,4 @@ const group = () => {
   )
 }
 
-export default group
+export default Group

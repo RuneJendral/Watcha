@@ -14,12 +14,10 @@ const MovieInfo = ({label, value }: MovieInfoProps) => (
   </View>
 )
 
-const movieDetails = () => {
+const MovieDetails = () => {
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { id } = useLocalSearchParams();
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const {data: movie} = useFetch(() =>
     fetchMovieDetails(id as string), true, [id]
   );
@@ -38,7 +36,6 @@ const movieDetails = () => {
     return `${months[month]} ${year}`;
   }
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [modalVisible, setModalVisible] = useState(false);
   
   return (
@@ -102,4 +99,4 @@ const movieDetails = () => {
   )
 }
 
-export default movieDetails
+export default MovieDetails

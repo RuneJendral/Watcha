@@ -7,17 +7,14 @@ import useFetch from "@/services/useFetch";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Text, View } from "react-native";
 
-const search = () => {
+const Search = () => {
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [searchQuery, setSearchQuery] = useState('');
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const{data: movies, loading, error, refetch: loadMovies, reset} = useFetch(() => fetchMovies({
-    query: searchQuery}, 
+    query: searchQuery},
   ), false, [])
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (searchQuery.trim() && movies?.length > 0 && movies?.[0]) {
       updateSearchCount(searchQuery, movies[0]);
@@ -84,4 +81,4 @@ const search = () => {
   )
 }
 
-export default search
+export default Search

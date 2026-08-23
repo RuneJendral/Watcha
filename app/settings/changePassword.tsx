@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 
-const changePasswordSetting = () => {
+const ChangePasswordSetting = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [form, setForm] = useState({oldPassword: '',  newPassword: '', repeatPassword: ''});
     const [dialogModalVisible, setDialogModalVisible] = useState(false);
@@ -91,4 +91,4 @@ const changePasswordSetting = () => {
     )
 }
 
-export default changePasswordSetting
+export default ChangePasswordSetting

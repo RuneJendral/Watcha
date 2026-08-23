@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 
-const changeNameSetting = () => {
+const ChangeNameSetting = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [form, setForm] = useState({name: ''});
     const user = useAuthStore((state) => state.user);
@@ -70,4 +70,4 @@ const changeNameSetting = () => {
   )
 }
 
-export default changeNameSetting
+export default ChangeNameSetting

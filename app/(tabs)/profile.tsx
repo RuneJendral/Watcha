@@ -7,14 +7,11 @@ import { Link, router } from 'expo-router'
 import React, { useState } from 'react'
 import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 
-const profile = () => {
+const Profile = () => {
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const {user} = useAuthStore();
-  //console.log("USER:", JSON.stringify(user, null, 2));
   const avatarUrl = `${user?.avatar}?name=${encodeURIComponent(user?.name ?? 'User')}&width=500&height=500`;
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogout = async () => {
@@ -73,4 +70,4 @@ const SettingsItem = ({ icon, title, onPress, textStyle, showArrow = true, path 
   )
 }
 
-export default profile
+export default Profile

@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 
-const changeMailSetting = () => {
+const ChangeMailSetting = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [form, setForm] = useState({email: '',  password: ''});
     const user = useAuthStore((state) => state.user);
@@ -77,4 +77,4 @@ const changeMailSetting = () => {
     )
 }
 
-export default changeMailSetting
+export default ChangeMailSetting
