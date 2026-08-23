@@ -1,6 +1,6 @@
 import { icons } from '@/constants/icons'
 import { images } from '@/constants/images'
-import { logOut } from '@/services/appwrite'
+import { logOut, resizedAvatarUrl } from '@/services/appwrite'
 import useAuthStore from '@/store/auth.store'
 import { SettingsItemProps } from '@/type'
 import { Link, router } from 'expo-router'
@@ -10,7 +10,7 @@ import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-na
 const Profile = () => {
 
   const {user} = useAuthStore();
-  const avatarUrl = `${user?.avatar}?name=${encodeURIComponent(user?.name ?? 'User')}&width=500&height=500`;
+  const avatarUrl = resizedAvatarUrl(user?.avatar ?? '', 500);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 

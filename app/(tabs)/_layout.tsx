@@ -1,5 +1,5 @@
 import { icons } from "@/constants/icons";
- 
+import { resizedAvatarUrl } from "@/services/appwrite";
 import useAuthStore from "@/store/auth.store";
 import { TabBarIconProps } from "@/type";
 import { Redirect, Tabs } from 'expo-router';
@@ -42,7 +42,7 @@ const TabProfileIcon = ({focused, icon, iconHighlight}: TabBarIconProps) => {
 const TabLayout = () => {
   const {isAuthenticated}  = useAuthStore();
   const {user} = useAuthStore();
-  const avatarUrl = `${user?.avatar}?name=${encodeURIComponent(user?.name ?? 'User')}&width=500&height=500`;
+  const avatarUrl = resizedAvatarUrl(user?.avatar ?? '', 500);
 
   if(!isAuthenticated) return <Redirect href={"/sign-in"}/>
 

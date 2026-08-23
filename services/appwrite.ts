@@ -61,8 +61,21 @@ export function slugifyUsername(raw: string) {
 }
 
 export function createFakeEmail(usernameSlug: string, suffix?: string) {
-    const tag = suffix ?? Math.random().toString(36).slice(2, 8); 
-    return `${usernameSlug}+${tag}@example.com`; 
+    const tag = suffix ?? Math.random().toString(36).slice(2, 8);
+    return `${usernameSlug}+${tag}@example.com`;
+}
+
+// avatar is stored as a complete Appwrite URL (already includes ?name=...&project=...);
+// resize by editing its existing query params instead of appending a second "?", which corrupts it.
+export function resizedAvatarUrl(avatarUrl: string, size: number) {
+    try {
+        const url = new URL(avatarUrl);
+        url.searchParams.set('width', String(size));
+        url.searchParams.set('height', String(size));
+        return url.toString();
+    } catch {
+        return avatarUrl;
+    }
 }
 
 export const createUser = async ({email, password, name}: CreateUserParams) => {
@@ -189,10 +202,10 @@ export const changeName = async ({name}: ChangeNameParams) => {
         }
 
         await database.updateDocument(
-            appwriteConfig.databaseId, 
-            appwriteConfig.userCollectionId, 
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
             userDocs.documents[0].$id,
-            {name}
+            {name: usernameSlug, avatar: avatars.getInitialsURL(name)}
         )
 
         await account.updateName(name);
@@ -337,10 +350,12 @@ export const getUserWatchlists = async (): Promise<Watchlist[] | undefined> => {
         const memberLinks = await database.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.watchlistMemberCollectionId,
-            [Query.equal('user_ids', currentAccount.$id)]
+            [Query.contains('user_ids', currentAccount.$id)]
         );
 
         const watchlistIds = memberLinks.documents.map(doc => doc.watchlist_id);
+
+        if (watchlistIds.length === 0) return [];
 
         const watchlists = await database.listDocuments(
             appwriteConfig.databaseId,
@@ -360,7 +375,7 @@ export const getMoviesWatchlist = async (watchlist_id: string): Promise<Watchlis
         const watchlistMovies = await database.listDocuments(
             appwriteConfig.databaseId, 
             appwriteConfig.watchlistMovieCollectionId, 
-            [Query.equal('watchlist_ids', watchlist_id), Query.limit(50)] //save query limit as set value in user Profile
+            [Query.contains('watchlist_ids', watchlist_id), Query.limit(50)] //save query limit as set value in user Profile
         );
 
         return watchlistMovies.documents as unknown as WatchlistMovies[];
@@ -560,7 +575,7 @@ export const deleteWatchlist = async (watchlistId: string) => {
             const movieCollection = await database.listDocuments(
                 appwriteConfig.databaseId,
                 appwriteConfig.watchlistMovieCollectionId,
-                [Query.equal('watchlist_ids', watchlistId)]
+                [Query.contains('watchlist_ids', watchlistId)]
             );
 
             for (const movie of movieCollection.documents) {

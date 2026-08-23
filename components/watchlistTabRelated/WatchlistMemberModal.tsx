@@ -1,4 +1,4 @@
-import { addUserToWatchlistWithUserName, getWatchlistMembers } from '@/services/appwrite';
+import { addUserToWatchlistWithUserName, getWatchlistMembers, resizedAvatarUrl } from '@/services/appwrite';
 import { ManageMembersProps, WatchlistMember } from '@/type';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, Text, TouchableOpacity, View } from 'react-native';
@@ -62,7 +62,7 @@ const WatchlistMemberModal : React.FC<ManageMembersProps> =  ({ visible, watchli
   };
 
   const getUserAvatar = (item: WatchlistMember, scale: number) => {
-    return `${item?.avatar}?name=${encodeURIComponent(item?.name ?? 'User')}&width=${scale}&height=${scale}`;
+    return resizedAvatarUrl(item?.avatar ?? '', scale);
   }
 
   const renderItem = ({ item }: { item: WatchlistMember }) => (
