@@ -70,10 +70,7 @@ const WatchlistCollection = () => {
     }
 
       clearSelection();
-
-    setTimeout(() => { //timeout because appwrite is not so fast in deleting the selected movies
       refetchWatchlistMovies();
-    }, 600);
   }
  
   const handleVotingSelected = async () => {

@@ -25,7 +25,7 @@ const CreateWatchlistModal : React.FC<CreateWatchlistProps & { refetchWatchlists
         const result = await createWatchlist(watchlistName);
 
         if (result.ok) {
-            setTimeout(refetchWatchlists, 600);
+            refetchWatchlists();
             setConfirmText(result.message);
             setDialogModalVisible(true);
         } else {

@@ -22,6 +22,33 @@ export const avatars = new Avatars(client);
 const maximumWatchlistCreations  = 3;
 const nowIso = () => new Date().toISOString();
 
+const MAX_PAGE_SIZE = 100; // Appwrite's hard cap on documents per listDocuments() call
+
+async function listAllDocuments(collectionId: string, queries: string[]) {
+    const documents: any[] = [];
+    let cursor: string | undefined;
+
+    while (true) {
+        const pageQueries = cursor
+            ? [...queries, Query.limit(MAX_PAGE_SIZE), Query.cursorAfter(cursor)]
+            : [...queries, Query.limit(MAX_PAGE_SIZE)];
+
+        const page = await database.listDocuments(appwriteConfig.databaseId, collectionId, pageQueries);
+        documents.push(...page.documents);
+
+        if (page.documents.length < MAX_PAGE_SIZE) break;
+        cursor = page.documents[page.documents.length - 1].$id;
+    }
+
+    return documents;
+}
+
+// `new Error(e as string)` on a caught AppwriteException relies on implicit toString()
+// coercion and throws away its .code/.type; this preserves the original error instead.
+function normalizeError(e: unknown): Error {
+    return e instanceof Error ? e : new Error(String(e));
+}
+
 export function slugifyUsername(raw: string) {
     return raw
         .normalize("NFKD")               
@@ -55,7 +82,7 @@ export const createUser = async ({email, password, name}: CreateUserParams) => {
         )
         
     } catch(e) {
-        throw new Error(e as string);
+        throw normalizeError(e);
     }
 }
 
@@ -64,6 +91,8 @@ export const createUserWithFakeMail = async ({password, name}: CreateUserFakeMai
         const usernameSlug = slugifyUsername(name);
         if (!usernameSlug) throw Error;
 
+        // Not race-proof: two concurrent signups can both pass this check.
+        // Add a unique index on `name` in the Appwrite console to close this fully.
         const existing = await database.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.userCollectionId,
@@ -90,7 +119,7 @@ export const createUserWithFakeMail = async ({password, name}: CreateUserFakeMai
         )
         
     } catch(e) {
-        throw new Error(e as string);
+        throw normalizeError(e);
     }
 }
 
@@ -98,7 +127,7 @@ export const signIn = async ({email, password}: SignInParams) => {
     try {
          const session = await account.createEmailPasswordSession(email, password);
     } catch (e) {
-        throw new Error(e as string);
+        throw normalizeError(e);
     }
 }
 
@@ -121,15 +150,15 @@ export const signInWithFakeMail = async ({name, password}: SignInFakeMailParams)
 
         await account.createEmailPasswordSession(fakeEmail, password);
     } catch (e) {
-        throw new Error(e as string);
+        throw normalizeError(e);
     }
 }
 
 export const logOut = async () => {
     try {
-        account.deleteSessions();
+        await account.deleteSessions();
     } catch (e) {
-        throw new Error(e as string);
+        throw normalizeError(e);
     }
 }
 
@@ -149,6 +178,7 @@ export const changeName = async ({name}: ChangeNameParams) => {
             throw new Error("User document not found in user collection.");
         }
 
+        // Same race window as signup — see note in createUserWithFakeMail.
         const existing = await database.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.userCollectionId,
@@ -168,7 +198,7 @@ export const changeName = async ({name}: ChangeNameParams) => {
         await account.updateName(name);
 
     } catch (e) {
-        throw new Error(e as string);
+        throw normalizeError(e);
     }
 }
 
@@ -196,7 +226,7 @@ export const changeMail = async ({email, password}: ChangeMailParams) => {
         )
 
     } catch (e) {
-        throw new Error(e as string);
+        throw normalizeError(e);
     }
 }
 
@@ -204,7 +234,7 @@ export const changePassword = async ({newPassword, oldPassword}: ChangePasswordP
     try {
         await account.updatePassword(newPassword, oldPassword);
     } catch (e) {
-        throw new Error(e as string);
+        throw normalizeError(e);
     }
 }
 
@@ -224,7 +254,7 @@ export const getCurrentUser = async () => {
         return currentUser.documents[0];
     } catch (e) {
         console.log(e);
-        throw new Error(e as string);
+        throw normalizeError(e);
     }
 }
 
@@ -437,12 +467,16 @@ export const createWatchlist = async (watchlistName: string): Promise <CreateWat
         }
 
         const userDoc = users.documents[0];
+        // Read-then-write: rapid double-taps could momentarily bypass this cap.
+        // The disabled-while-submitting button (CustomButton) closes the common case;
+        // there's no Appwrite-side atomic counter for the rest.
         const currentWatchlistCount = Number(userDoc.created_watchlist_count ?? 0);
 
         if (currentWatchlistCount >= maximumWatchlistCreations) {
             return { ok: false, code: "LIMIT_REACHED", message: `You’ve reached the limit of ${maximumWatchlistCreations} watchlists.` };
         }
 
+        // Not race-proof: add a unique index on `name` in the Appwrite console to close this fully.
         const existingWatchlistMovies = await database.listDocuments(
             appwriteConfig.databaseId, 
             appwriteConfig.watchlistCollectionId, 
@@ -971,12 +1005,10 @@ export async function getActiveVotingSession(watchlistId: string) {
 // Hard delete a session + all votes that belong to it
 export async function deleteVotingSessionCascade(sessionId: string) {
   // delete votes
-  const votes = await database.listDocuments(
-    appwriteConfig.databaseId,
-    appwriteConfig.watchlistVoteCollectionId,
-    [Query.equal("session_id", sessionId), Query.limit(200)]
-  );
-  for (const v of votes.documents) {
+  const votes = await listAllDocuments(appwriteConfig.watchlistVoteCollectionId, [
+    Query.equal("session_id", sessionId),
+  ]);
+  for (const v of votes) {
     await database.deleteDocument(appwriteConfig.databaseId, appwriteConfig.watchlistVoteCollectionId, v.$id);
   }
   // delete session
@@ -1066,26 +1098,18 @@ export async function castVote(sessionId: string, movieId: string, value: VoteVa
 
 export async function getUserVotesForSession(sessionId: string) {
   const userId = await getMyAccountId();
-  const res = await database.listDocuments(
-    appwriteConfig.databaseId,
-    appwriteConfig.watchlistVoteCollectionId,
-    [
-      Query.equal("session_id", sessionId),
-      Query.equal("user_id", userId),
-      Query.limit(1000),
-    ]
-  );
-  return res.documents as any[];
+  return listAllDocuments(appwriteConfig.watchlistVoteCollectionId, [
+    Query.equal("session_id", sessionId),
+    Query.equal("user_id", userId),
+  ]);
 }
 
 export async function tallyVotes(sessionId: string): Promise<Record<string, number>> {
-  const res = await database.listDocuments(
-    appwriteConfig.databaseId,
-    appwriteConfig.watchlistVoteCollectionId,
-    [Query.equal("session_id", sessionId), Query.limit(200)]
-  );
+  const docs = await listAllDocuments(appwriteConfig.watchlistVoteCollectionId, [
+    Query.equal("session_id", sessionId),
+  ]);
   const map: Record<string, number> = {};
-  for (const v of res.documents as any[]) {
+  for (const v of docs as any[]) {
     const key = String(v.movie_id);
     map[key] ??= 0;
     map[key] += v.value === "like" ? 1 : -1;
@@ -1110,13 +1134,11 @@ export async function getWinnerForSession(sessionId: string) {
     }
   }
   // optional: also compute likes/dislikes per movie for a richer result
-  const res = await database.listDocuments(
-    appwriteConfig.databaseId,
-    appwriteConfig.watchlistVoteCollectionId,
-    [Query.equal("session_id", sessionId), Query.limit(1000)]
-  );
+  const docs = await listAllDocuments(appwriteConfig.watchlistVoteCollectionId, [
+    Query.equal("session_id", sessionId),
+  ]);
   const breakdown: Record<string, { likes: number; dislikes: number; total: number }> = {};
-  for (const v of res.documents as any[]) {
+  for (const v of docs as any[]) {
     const k = String(v.movie_id);
     breakdown[k] ??= { likes: 0, dislikes: 0, total: 0 };
     if (v.value === "like") breakdown[k].likes++;

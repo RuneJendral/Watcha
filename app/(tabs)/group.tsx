@@ -66,10 +66,7 @@ const Group = () => {
   }
 
   clearSelection();
-
-  setTimeout(() => { //timeout because appwrite is not so fast in deleting the selected watchlists
-    refetchWatchlist();
-  }, 600);
+  refetchWatchlist();
 }
 
   return (

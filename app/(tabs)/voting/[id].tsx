@@ -50,6 +50,7 @@ const VotingScreen= () => {
   const [minutes, setMinutes] = useState("20");
   const [allowSkip, setAllowSkip] = useState(false);
   const [timeLeftMs, setTimeLeftMs] = useState(-1); // -1 = uninitialized
+  const [voteError, setVoteError] = useState<string | null>(null);
 
   // winner view
   const [winner, setWinner] = useState<{ id?: string; title?: string; poster_url?: string } | null>(null);
@@ -179,6 +180,7 @@ const VotingScreen= () => {
     const movie = movies[index];
     if (!movie) return;
     const value: VoteValue = dir === "right" ? like : dislike;
+    setVoteError(null);
     try {
       await castVote(session.$id, String(movie.movie_id), value);
       await refreshScores(session.$id);
@@ -187,7 +189,10 @@ const VotingScreen= () => {
       if (new Set(myVotes.map((v) => String(v.movie_id))).size >= (session.movie_ids ?? []).length) {
         setFinished(true);
       }
-    } catch {}
+    } catch {
+      swiperRef.current?.swipeBack();
+      setVoteError(`Couldn't record your vote for "${movie.title}" — pulled the card back, try again.`);
+    }
   };
 
   const onSwipedAll = async () => {
@@ -414,6 +419,7 @@ const VotingScreen= () => {
             <TouchableOpacity onPress={onCloseNow} className="mt-2 mb-2 self-start bg-light-200 px-3 py-1.5 rounded-lg">
               <Text className="text-black font-semibold">Close Voting</Text>
             </TouchableOpacity>
+            {voteError && <Text className="text-red-400 mb-2">{voteError}</Text>}
           </View>
 
           <View className="flex-1 px-5" onLayout={(e) => setAvailH(e.nativeEvent.layout.height)}>

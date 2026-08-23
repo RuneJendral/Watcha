@@ -5,7 +5,7 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 
 const CustomButton = ({onPress, title="Click Me", style, textStyle, leftIcon, isLoading = false}:CustomButtonProps) => {
     return (
-        <TouchableOpacity className={cn('bg-accent rounded-lg', style)} onPress={onPress}>
+        <TouchableOpacity className={cn('bg-accent rounded-lg', isLoading && 'opacity-70', style)} onPress={onPress} disabled={isLoading}>
             {leftIcon}
 
             <View className="flex-row items-center justify-center">
